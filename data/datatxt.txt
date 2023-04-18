@@ -1,0 +1,33 @@
+Midlothian           21     225      56    18.8       3
+West Lothian         24      22      18    37.9       2
+East Lothian         33      44      30    43.4       3
+Kinross              33       3       7    30.3       1
+Fife                 36      41      94    41.3       1
+Peebles              41       9       9    29.3       3
+Clackmannan          41       2      11    47.4       1
+Selkirk              52       5       5    41.9       3
+Lanark               54      23     147    68.1       2
+Berwick              56      11      31    15.2       3
+Roxburgh             67       9      34    31.8       3
+Stirling             71      13      51    31.1       2
+Perth                78      26     126    14.4       1
+Dunbarton            79       0      21    27.3       2
+Angus                85       5      99    55.3       1
+Dumfries             86       3      55    25.9       3
+Renfrew              92       1      78    69.9       2
+Ayr                 110       2      84    26.4       2
+Kircudbright        110       0      29    11.3       3
+Kincardine          125       1      26    12.3       1
+Bute                132       0      12    43.6       2
+Aberdeen            156       3     123    23.1       1
+Wigtown             157       0      22    23.2       3
+Banff               159       4      36    12.9       1
+Moray               174       2      27    27.6       1
+Nairn               175       0       8    45.3       1
+Argyll              179       1      72    12.7       2
+Inverness           234       7      74    10.8       1
+Ross                274       4      55    10.7       1
+Caithness           274       1      23    28.3       1
+Sutherland          283       0      23    10.3       1
+Orkney              366       0      29     9.0       1
+Shetland            491       1      22     7.7       1
