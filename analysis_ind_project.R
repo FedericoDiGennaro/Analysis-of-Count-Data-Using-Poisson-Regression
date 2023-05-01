@@ -6,7 +6,10 @@ library(readxl)
 library(MASS) # for BOXCOX
 library(car) # for VIF
 library(performance) # for nicer multicollinearity plot
-
+library(jtools)
+library(sandwich)
+library(goodness-of-fit)
+library(pscl)
 # load data ---------------------------------------------------------------
 rm(list = ls())
 
@@ -24,8 +27,8 @@ glimpse(data)
 # outliers check
 
 # define regressors
+data$Direction <- as.factor(data$Direction)
 X <- data[-c(1,3)]
-X$Direction <- as.factor(X$Direction)
 
 # define dependent
 y <- data[3]
@@ -37,135 +40,169 @@ print(c('is there any missing value? ', any(is.na(data))))
 summary(X)
 var(X[-4])
 
+
 # for the graphical analysis look at the following pairs plot (AGGREGATE DATA)
 
 ggpairs(X)
 
 # in order to check the differences in distribution due to difference in the
 # union_shop variable, use this: (DISAGGREGATE DATA wrt Union_shop)
-ggpairs(X[],
-        aes(color = X$Direction, alpha = .5),
-        lower = list(continuous = 'smooth'), legend = 1) +
-  theme(legend.position = "bottom", text = element_text(size = 14), 
-        axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10) )
+# Create the ggpairs plot
+plot <- ggpairs(X, aes(color = Direction, alpha = .5),
+                lower = list(continuous = 'smooth'), legend = 1) +
+  theme(legend.position = "bottom", text = element_text(size = 12), 
+        axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8))
+# Remove alpha from the legend
+plot <- plot +
+  scale_alpha_identity(guide = "none")
+# Display the plot
+print(plot)
 
-par(mfrow=c(2,2))
+# Create the ggpairs plot with histogram
+hist(y$Apprentices, breaks=seq(0,250,10))
+hist(y$Apprentices, breaks=seq(0,250,10), xlab = "Number of Apprentices", ylab = "Frequency")
 
-qqnorm(data$Distance, pch = 1, frame = FALSE, main = "Distance")
-qqline(data$Distance, col = "steelblue", lwd = 2)
+mean(y$Apprentices)
+var(y$Apprentices)
 
-qqnorm(data$Population, pch = 1, frame = FALSE, main = "Population")
-qqline(data$Population, col = "steelblue", lwd = 2)
-
-qqnorm(data$Degree_Urb, pch = 1, frame = FALSE, main = "Degree Urbanisation")
-qqline(data$Degree_Urb, col = "steelblue", lwd = 2)
+# The variance is much greater than the mean, which suggests that we will 
+# have over-dispersion in the model.
 
 #Outliers detenction
 
 par(mfrow=c(1,1))
-boxplot(X[-2], las = 2, col = c("red", "steelblue", "yellow"), ylab ="(%)")
+boxplot(X[-4], las = 2, col = c("red", "steelblue", "yellow"), ylab ="(%)")
 
-# MODEL FITTING ---------------------------------------------------------------------
+# MODEL 1 ---------------------------------------------------------------------
 
-# linear regression with all the variables
-# model selection (forward/backward selection)
-# transformation of some of the variable (e.g. Box-Cox) and new linear regression with them
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                      + Direction , data, family = poisson(link = "log"))
+summary(poisson.model)
 
-#linear regression with all the variables
-model <- lm(p_stop ~ p_workforce + Union_shop + p_SectorA + p_agriculture, data=data)
-coef(model)
-summary(model)
-vif(model)
-vif_values <- vif(model)           #create vector of VIF values
+qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction , data, family = quasipoisson())
+summary(qpoisson.model)
 
-barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue") #create horizontal bar chart to display each VIF value
+cov.m1 <- vcovHC(poisson.model, type="HC0")
+std.err <- sqrt(diag(cov.m1))
+r.est <- cbind(Estimate= coef(poisson.model), "Robust SE" = std.err,
+               "Pr(>|z|)" = 2 * pnorm(abs(coef(poisson.model)/std.err), lower.tail=FALSE),
+               LL = coef(poisson.model) - 1.96 * std.err,
+               UL = coef(poisson.model) + 1.96 * std.err)
+r.est
 
-# abline(v = 5, lwd = 3, lty = 2)    #add vertical line at 5 as after 5 there is severe correlation
-# all acceptable values 
+with(poisson.model, cbind(res.deviance = deviance, df = df.residual,
+               p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+# from the test above, we can evince that data does not fit the model well
 
-# Perform backward selection using AIC
-final_model <- step(model, direction = "backward", trace = FALSE)
-coef(final_model)
-summary(final_model)
+#MODEL ASSESSMENT
+residuals <- residuals(poisson.model)
+plot(fitted(poisson.model), residuals, type = "p", xlab = "Fitted values", ylab = "Residuals")
 
-#transformations and new fit
-ggpairs(X[-2])
+hist(residuals, main = "Residuals Histogram")
+density_res <- density(residuals)
+plot(density_res, main = "Residuals Density Plot")
 
-new_X = X
-new_X$p_SectorA = log(new_X$p_SectorA)
-new_X$p_agriculture = log(new_X$p_agriculture)
-# new_X$p_workforce = exp(new_X$p_workforce)
+lambda <- mean(y$Apprentices)  # Calculate the mean of the response variable
+expected_quantiles <- qpois(ppoints(length(residuals)), lambda)
+qqplot(expected_quantiles, residuals, main = "Q-Q Plot")
 
-ggpairs(new_X[-2])
+# Calculate the Pearson residuals
+pearson_resid <- residuals(poisson.model, type = "pearson")
+# Calculate the Pearson chi-square statistic
+pearson_chi_sq <- sum(pearson_resid^2)
+# Obtain the residual degrees of freedom
+df_resid <- df.residual(poisson.model)
+# Estimate the dispersion parameter
+dispersion <- pearson_chi_sq / df_resid
+# Print the estimated dispersion parameter
+print(dispersion)
 
-#linear regression with all the variables AND LOG TRANSFORM
-model <- lm(y$p_stop ~ new_X$p_workforce + new_X$Union_shop + new_X$p_SectorA + 
-              new_X$p_agriculture)
-coef(model)
-summary(model)
+epiDisplay::poisgof(poisson.model)
 
-# Perform backward selection using AIC
-final_model <- step(model, direction = "backward", trace = FALSE)
-coef(final_model)
-summary(final_model)
+# MODEL 2: removing the outlier ---------------------------------------------------------------------
+rm(list = ls())
+data <- read_excel("data/data2.xlsx")
+glimpse(data)
 
-# BOX COX
-model <- lm(p_stop ~ p_workforce + Union_shop + p_SectorA + p_agriculture, data=data)
-bc <- boxcox(model, interp = TRUE)
-lambda <- bc$x[which.max(bc$y)]
-abline(v = lambda, col = "red")
-print(c('Lambda that maximize log-likelihood is ', lambda))
+# define regressors
+data$Direction <- as.factor(data$Direction)
+X <- data[-c(1,3)]
 
-data_bc <- data
-data_bc$p_stop <- (data_bc$p_stop^lambda -1)/lambda
-model_bc <- lm(p_stop ~ p_workforce + Union_shop + p_SectorA + p_agriculture, 
-               data=data_bc)
-summary(model_bc)
+# define dependent
+y <- data[3]
 
+hist(y$Apprentices, breaks=seq(0,250,10))
 
-####################################
-# since the result of this analysis are very poor, let's try to add
-# the interaction terms (given the correlation among variables)
+mean(y$Apprentices)
+var(y$Apprentices)
 
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                    + Direction , data, family = poisson(link = "log"),
+                   control = glm.control(maxit = 1000))
+summary(poisson.model)
 
-#linear regression with all the variables
-model <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, data=data)
-summary(model)
+qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction , data, family = quasipoisson(),
+                   control = glm.control(maxit = 1000))
+summary(qpoisson.model)
 
-# abline(v = 5, lwd = 3, lty = 2)    #add vertical line at 5 as after 5 there is severe correlation
-# all acceptable values 
-
-# Perform backward selection using AIC
-final_model <- step(model, direction = "backward", trace = FALSE)
-summary(final_model)
-
-vif(final_model)
-vif_values <- vif(final_model)           #create vector of VIF values
-
-barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue") #create horizontal bar chart to display each VIF value
-
-collinearity <- check_collinearity(final_model)
-plot(collinearity)
+with(poisson.model, cbind(res.deviance = deviance, df = df.residual,
+                         p = pchisq(deviance, df.residual, lower.tail=FALSE)))
 
 
-# apply box-cox transformation 
-model_box <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, data=data)
-bc <- boxcox(model_box, interp = TRUE)
-lambda <- bc$x[which.max(bc$y)]
-abline(v = lambda, col = "red")
-print(c('Lambda that maximize log-likelihood is ', lambda))
+poisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                    + Direction , data, family = quasipoisson(),
+                    control = glm.control(maxit = 1000))
+summary(poisson.model2)
 
-data_bc <- data
-data_bc$p_stop <- (data_bc$p_stop^lambda -1)/lambda
-model_bc <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, 
-               data=data_bc)
-summary(model_bc)
-final_model_bc <- step(model_bc, direction = "backward", trace = FALSE)
-summary(final_model_bc)
+# MODEL 3: log of population and distance ---------------------------------------------------------------------
+data$Distance = log(data$Distance)
+data$Population = log(data$Population)
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction, data , family = poisson(link = "log"),
+                   control = glm.control(maxit = 1000))
+summary(poisson.model)
 
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction, data , family = quasipoisson(),
+                   control = glm.control(maxit = 1000))
+summary(poisson.model)
 
+# MODEL 4: interactions ---------------------------------------------------------------------
+ggpairs(X)
 
+#without the log
+rm(list = ls())
+data <- read_excel("data/data2.xlsx")
+glimpse(data)
+data$Direction <- as.factor(data$Direction)
+X <- data[-c(1,3)]
+y <- data[3]
+poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
+                                    + Direction)^2 , data, family = poisson(link="log"))
+summary(poisson.model3)
+poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
+                                   + Direction)^2 , data, family = quasipoisson())
+summary(poisson.model3)
 
+#with the log
+rm(list = ls())
+data <- read_excel("data/data2.xlsx")
+glimpse(data)
+data$Direction <- as.factor(data$Direction)
+X <- data[-c(1,3)]
+y <- data[3]
+data$Distance = log(data$Distance)
+data$Population = log(data$Population)
 
+poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
+                                   + Direction)^2 , data, family = poisson(link="log"))
+summary(poisson.model3)
 
+poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
+                                   + Direction)^2 , data, family = quasipoisson())
+summary(poisson.model3)
 
+with(poisson.model3, cbind(res.deviance = deviance, df = df.residual,
+                           p = pchisq(deviance, df.residual, lower.tail=FALSE)))

@@ -1,8 +1,8 @@
 ---
-title: " A Statistical Analysis ?????????"
+title: " A Statistical Analysis of count data"
 subtitle: "MATH-493 - Applied Biostatistics: individual project"
 
-date: "`r Sys.Date()`"
+#date: "`r Sys.Date()`"
 
 author: " Federico Di Gennaro"
 
@@ -12,7 +12,7 @@ fontsize: 12pt
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
-- \fancyhead[CO,CE]{Applied Biostatistics Report - Individual project}
+#- \fancyhead[CO,CE]{Applied Biostatistics Report - Individual project}
 - \fancyfoot[CO,CE]{Federico Di Gennaro}
 - \fancyfoot[LE,RO]{\thepage}
 
@@ -22,27 +22,28 @@ output: pdf_document
 
 # Introduction 
 This statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 regions in Scotland.
-
-ADD SOMETHING
-
 The study utilizes the following four variables to try to predict the number of apprentices migration:
 
 * Distance: Distance (in km ???) from the region to Edinburgh. 
 * Population: Population (1000s) in the region. 
-* Degree_Urb: Degree of urbanisation of the region (in %). 
+* Degree_Urb: Degree of urbanization of the region (in %). 
 * Direction: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
 
-The output variable, as said before, is the number apprentices migration that in this analysis we called "Apprentices".
+The outcome variable, as said before, is the number apprentices migration that in this analysis we called "Apprentices". 
+It is immediately important to notice the variables we are working with; in particular, we can notice that the outcome variable "Apprentices" can be seen as "count data", taking only discrete values. For that reason, we will not end up with an outcome normally distributed and so linear regression cannot be used.
 
-ADD why we use poisson regression
+From literature otherwise, we know that Poisson regression is suitable to analyse count data (in this case our $Y$ is a the number of apprentices, i.e. it can be seen as count data).
+Poisson regression is in the family of the so-called Generalized Linear Models (GLM).  
+Generalized Linear Models are models in which response variables follow a distribution other than the normal distribution. In GLMs, the response variable is connected to the linear predictor $\eta =  \beta_0 + \beta_1X_1 + ... + \beta_k X_k$ by a link function $g(\cdot)$, that describe the functional relationship between $\eta$ and the mathematical expectation of the response variable: $g(\mathbb{E}[Y|x])=\eta$. For Poisson Regression, $g(x)=log(x)$. 
+
+Poisson regression relies on Poisson distribution; we say that a discrete random variable X is distributed as a Poisson with parameter $\lambda$ ($X \sim Poisson(\lambda)$) if it has the following density function: $$\mathbb{P}(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}$$
 
 # Exploratory Data Analysis
 Before starting in fitting the model, it is a good practice to explore the available data. In this way, we can already notice some insights about what the model will tell us and in which way each variable can effect the model itself.
-The dataset (see appendix, Table 1) has 33 rows, corresponding to the different counties of Scotland under study, and for each row we have the dependent variable under study (Apprentices), and the registered values for the regressors mentioned in the introduction. 
+The dataset provided has 33 rows, corresponding to the different counties of Scotland under study, and for each row we have the dependent variable under study (Apprentices), and the registered values for the regressors mentioned in the introduction. 
 
 ```{r setup, include = FALSE}
 # Setup options for R Markdown
-
 library(ggplot2)
 library(tidyverse)
 library(GGally)
@@ -50,6 +51,7 @@ library(readxl)
 library(MASS) # for BOXCOX
 library(car) # for VIF
 library(performance) # for nicer multicollinearity plot
+library(xtable)
 data <- read_excel("data/data.xlsx")
 
 knitr::opts_chunk$set(
@@ -62,154 +64,100 @@ knitr::opts_chunk$set(
   fig.pos = "ht",
   out.extra = ""
 )
-
-
 ```
 
-```{r plot1, fig.cap = "Pairs Plot", fig.width= 15,fig.height=8}
+```{r plot1, fig.cap = "Pairs Plot of the explanatory variables. Their distribution is divided with respect to the value of the variable Direction (factor)", fig.width= 15,fig.height=12}
 # define regressors
+data$Direction <- as.factor(data$Direction)
 X <- data[-c(1,3)]
-X$Direction <- as.factor(X$Direction)
-
-# define dependent
-y <- data[3]
 
 # in order to check the differences in distribution due to difference in the
-# union_shop variable, use this: (DISAGGREGATE DATA wrt Union_shop)
-ggpairs(X,
-        aes(color = X$Direction, alpha = .5),
-        lower = list(continuous = 'smooth'), legend = 1) +
-  theme(legend.position = "bottom", text = element_text(size = 14), 
-        axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10) )
+# union_shop variable, use this: (DISAGGREGATE DATA wrt Direction)
+plot <- ggpairs(X, aes(color = Direction, alpha = .5),
+                lower = list(continuous = 'smooth'),
+                upper = list(continuous = wrap("cor",size = 12)), 
+                legend = 1, textsize=25) +
+  theme(legend.position = "bottom", text = element_text(size = 25), 
+        axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20))
+# Remove alpha from the legend
+plot <- plot +
+  scale_alpha_identity(guide = "none")
+# Display the plot
+print(plot)
 ```
+From this plot, we can notice that the three variables $\textit{Distance}$, $\textit{Population}$ and $\textit{Degree Urb}$ change distribution with respect to the value of the value of the factor variable $\textit{Direction}$. Please notice also that the variables $\textit{Distance}$ and $\textit{Population}$ are really skewed; for this reason it can be worth at some point of the analysis trying to apply a logarithmic transformation to them in fitting our models.
 
-In this multivariate graphical exploration of data we kept only the continuous variables.
-Then we plot their distribution divided by the value of the binary variable Union_Shop (on the diagonal). Then outside the diagonal we can find the correlation plot within each possible pairs. The division with respect to the binary variable, helps us to disaggregate data to understand them better and avoid mis-interpretation (Simpson paradox).
-In particular in this example we can find out that p-workforce is the variable most affected by the value of the binary variable.
-
-```{r plot2, fig.cap = "Distribution of different variables", fig.width= 15,fig.height=8}
-par(mfrow=c(2,2))
-
-qqnorm(data$p_stop, pch = 1, frame = FALSE, main = "p_stop")
-qqline(data$p_stop, col = "steelblue", lwd = 2)
-
-qqnorm(data$p_workforce, pch = 1, frame = FALSE, main = "p_workforce")
-qqline(data$p_workforce, col = "steelblue", lwd = 2)
-
-qqnorm(data$p_SectorA, pch = 1, frame = FALSE, main = "p_SectorA")
-qqline(data$p_SectorA, col = "steelblue", lwd = 2)
-
-qqnorm(data$p_agriculture, pch = 1, frame = FALSE, main = "p_agriculture")
-qqline(data$p_agriculture, col = "steelblue", lwd = 2)
-
-par(cex.lab = 2)
+```{r plot2, fig.cap = "Histogram of outcome variable Apprentices", fig.width= 10,fig.height=6}
+# define dependent
+y <- data[3]
+hist(y$Apprentices, breaks=seq(0,250,10), main="Histogram of the outcome variable", xlab = "Number of Apprentices", ylab = "Frequency")
 ```
+With the histogram of the outcome variable $\textit{Apprentices}$, I can observe the shape of the empirical distribution of that variable. Specifically, it is already noticeable that there is an observation that is really far away from the others; this can leads problems such as over-dispersion.
 
 # Model Fitting
 ## Model highlights:
-**Base model.**
-We firstly started by a simple regression model using all the variables and with no interactions. We consider this as our "base model" that we start to investigate in order to gain insights about what will happen in model selection.
-Let 
-$$
-Y = p\_stop; \;
-X_1 = p\_workforce; \;
-X_2 = Union\_shop ; \;
-X_3 = p\_SectorA; \;
-X_4 = p\_agriculture.
-$$
-Then, we fit the following model: 
-\begin{equation}
-Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_3 + \beta_4 X_4 + \epsilon
-\end{equation}
-We fit this model with R using `lm()` command and we obtained
+Let $$ Y = Apprentices; \;
+X_1 = Distance; \;
+X_2 = Population; \;
+X_3 = Degree\_Urb; \;
+X_4 = Direction$$
+As already said in the introduction, we will use Poisson Regression to determine whether there is or not effect between explanatory variables $X_i, i \in \{1,2,3,4\}$ and the outcome variable $Y$.
+
+**Model 1.**  
+Let's now define the first model in the study. As already said before, let $$\eta =  \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4 X_4$$ Hence, the model is defined as $$log(\mathbb{E}[Y|x])=\eta$$
+
 ```{r}
-model <- lm(p_stop ~ p_workforce + Union_shop + p_SectorA + p_agriculture, data=data)
-knitr::kable(summary(model)$coefficients)
-#summary(model)
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data,
+                   family=poisson(link = "log"))
+# Example table data
+d <- summary(poisson.model)$coefficients
+knitr::kable(d, digits = 2)
 ```
-The output of this simple model already shows us some good insights. Firstly, there is only one variable whose coefficient is significantly different from zero (t-test $H_0: \beta_i = 0$). Then, the adjusted $R^2$ obtained is 0.2733, proving that the model seems to perform quite poorly in this regression task. Even performing a forward or backward selection does not help us to increase the adjusted $R^2$ because as already suggested by the output above the only variable kept by these step selection methods was the only one that were significant in the base model ("p_workforce").
-For this reason, we started to investigate other kind of relationship between $Y$ and the explanatory variables $X_i$.
+This problems seems to have a lot of problem.
+Firstly, as already guessed in the exploratory data analysis, the model suffers of over-dispersion. The residual deviance $(256.31)$ is bigger than the degrees of freedom $(28)$. For this reason it seems that there is a larger variance in observed counts than expected from the Poisson assumption, meaning that there is over-dispersion and that the Poisson model does not fit well.  
+Another way to observe the over-dispersion, is fitting a quasi-Poisson model: the output in R will have the same coefficient as $\textit{Model 1}$ but from this new model we can extrapolate the real dispersion parameter $(\phi)$ of the data that turns out to be $7731.329$ (i.e. there is a huge over-dispersion because that parameter should be around 1 in a Poisson Regression model). This problem can be related to the extremely un-related observation of variable $\textit{Apprentices}$ that we observed in the EDA. For this reason I am removing this observation from my data and then try to fit again the same model.
 
-**Best model.**
-Our first guess in order to increase the variance explained by our model is to include all possible two-way interactions between the independent variables. As we already highlighted in the exploratory data analysis in fact, there is some level of interaction between the regressors. Therefore, it is good habit to include the interaction terms inside the model.
-
-We have also decided to apply Box-Cox transformation to our data. At the core of the Box-Cox transformation is an exponent, lambda ($\lambda$). We pick the $\lambda$ that maximizes the log-likelihood of the data. The “optimal value” is the one which results in the best approximation of a normal distribution curve. This value is then used to transform the dependent variable "p_stop".
-Let's seek for the best value of lambda in [Figure 3].
-```{r plot3, fig.cap = "Box Cox: Best lambda", fig.width=8,fig.height=4}
-model_box <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, data=data)
-bc <- boxcox(model_box, interp = TRUE)
-lambda <- bc$x[which.max(bc$y)]
-abline(v = lambda, col = "red")
-points(x=lambda,y=-485, lwd=2, pch =19, col ="red")
-text(x=.45,y=-185, col="black", labels=paste('0.303'), pos=1)
-```
-According to this plot, the best value for $\lambda$ is around $\frac{1}{3}$. Can be used to apply the following transformation to our outcome variable:
-$$\frac{y^{\lambda}-1}{\lambda}$$
-
-Finally, the regression mode, where $\frac{y^{\lambda}-1}{\lambda}$ is modelled as:
-\begin{equation}
-\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_3 + \beta_4 X_4 +  \beta_5 X_1 \cdot X_2 + \beta_{6} X_1 \cdot X_3 + \beta_{7} X_1 \cdot X_4 + \beta_{8} X_2 \cdot X_3 + \beta_{9} X_2 \cdot X_4 + \beta_{10} X_3 \cdot X_4 + \epsilon
-\end{equation}
+**Model 2.**
+As already said above, this model is the same model as $\textit{Model 1}$ where I simply removed the outlier observation that probably made $\textit{Model 1}$ over-dispersive.  
+Even removing the strange observation, the model still suffers of over-dispersion ($\mu=7.59$ and $\sigma^2=131.86$). In this case otherwise, the dispersion parameter is no longer as large as before $(\phi=18.43)$ and for this reason it is worth trying to work with this data.  
+Due to over-dispersion, modeling this data using the Poisson family assumption yield erroneous p-values regarding model variables. For this reason I decide to use a quasi-Poisson model, that relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same.  
 ```{r}
-data_bc <- data
-data_bc$p_stop <- (data_bc$p_stop^lambda -1)/lambda
-model_bc <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, data=data_bc)
-
-final_model_bc <- step(model_bc, direction = "backward", trace = FALSE)
+data <- read_excel("data/data2.xlsx")
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+                    + Direction , data, family = quasipoisson())
+knitr::kable(summary(poisson.model)$coefficients, digits = 2)
 ```
-Finally, we perform a linear regression (using `lm()` command in R) on this model and we obtain the following output:
+Under these assumptions we can see that the parameters significant at a level $\alpha=0.05$ are $\beta_0$(intercept), $\beta_1$ (coefficient of the variable $\textit{Distance}$) and $\beta_2$ (coefficient of the variable $\textit{Population}$).  
+The significant variable $\textit{Distance}$ as a negative sign in its parameter, meaning that at an increase of $\textit{Distance}$ corresponds a decrease of the number of $\textit{Apprentices}$. The significant variable $\textit{Population}$ as a positive sign in its parameter, meaning that at an increase of $\textit{Distance}$ corresponds an increase of the number of $\textit{Apprentices}$.
+From now on, I will consider this model (Quasi-Poisson regression model) as **base model**.
+
+**Model 3.**
+As said in the previous exploratory data analysis, it is worth trying to transform the explanatory variables $\textit{Distance}$ and $\textit{Population}$ with a logarithmic transformation. This can avoid problems coming from the skewednees these variables.
 ```{r}
-data_bc <- data
-data_bc$p_stop <- (data_bc$p_stop^lambda -1)/lambda
-model_bc <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture)^2, 
-               data=data_bc)
-knitr::kable(summary(model_bc)$coefficients)
-#summary(model_bc)
+data$Distance = log(data$Distance)
+data$Population = log(data$Population)
+# Change the names of the variables
+names(data)[names(data) == "Distance"] <- "LogDistance"
+names(data)[names(data) == "Population"] <- "LogPopulation"
+poisson.model<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
+                   + Direction, data , family = poisson(link = "log"),
+                   control = glm.control(maxit = 1000))
+
+poisson.model<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
+                   + Direction, data , family = quasipoisson(),
+                   control = glm.control(maxit = 1000))
+
+knitr::kable(summary(poisson.model)$coefficients, digits = 2)
 ```
-Again a step wise backward elimination procedure is used to determine the best subset of independent variables that explain the variation in the dependent variable. 
-Once the model has been fitted and backward elimination has been performed, the final (and best) model becomes the following:
-\begin{equation}
-\hat{y} = -0.31 + 0.06 p\_workforce + -0.05 p\_SectorA + 0.06(Union\_shop \cdot p\_SectorA)
-\end{equation}
-where all the coefficients are strongly significant (p-value < 0.01). 
+From these model, we can observe that the variables $\textit{Distance}$ and $\textit{Population}$ are even more significant then in $\textit{Model 3}$, and their interpretation does not change because the sign of their parameters is still the ones as in $\textit{Model 3}$. This problem is better than $\textit{Model 3}$ MAKE THE STATISTICAL TEST!!!!!!!
+It is also good to notice that the over-dispersion parameter $\phi$ is decreasing too (now it is equal to $3.37$)
 
-
-# Model Evaluation 
-Before rushing into the conclusions, it's important to verify whether the underlying assumptions of the linear regression model are satisfied, and whether the model is suffering from multicollinearity.
-
-## Linear regression assumptions
-The linear regression model has a number of underlying assumptions that need to be met in order for the model to be valid and the estimated coefficients to be reliable. These assumptions are:
-
-* Linearity: The relationship between the dependent variable and each independent variable is linear.
-* Independence: The observations in the dataset are independent of each other.
-* Homoscedasticity: The variance of the error term is constant across all levels of the independent variable(s).
-* Normality: The error term is normally distributed with mean zero and variance $\sigma^2$.
-* No multicollinearity: There is no perfect or high correlation among the independent variables.
-* No auto-correlation: The error terms are not correlated with each other.
-
-If any of these assumptions are violated, it can lead to biased or inefficient estimates of the regression coefficients and incorrect inferences. In order to check on them, we can look at Figure 4 and Figure 5 below. 
-```{r plot4, fig.cap = "Checking model assumptions", fig.width= 8,fig.height=5}
-par(mfrow = c(2,2))
-plot(final_model_bc)
-#shapiro.test(resid(model))
+**Model 4.**
+Now I am adding at the Quasi-Poisson model $\textit{Model 4}$ the interactions between the whole variables.
+```{r}
+poisson.model4<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
+                    + Direction)^2 , data, family = quasipoisson())
+knitr::kable(summary(poisson.model4)$coefficients, digits = 2)
 ```
-On the top left corner of Figure 4, we have the the Residual plot: residuals against the predicted values, the plot does not show any clear patterns, and the residuals are correctly scattered around zero, verifying the assumption of linearity. 
-To check on the normality, is the top right corner of  Figure 4 that we should focus on: in this plot, the x-axis represents the quantiles of the theoretical distribution (in this case, the normal distribution), while the y-axis represents the quantiles of the dataset being analyzed, and since the points are following a straight line, the dataset is normally distributed. 
-If this is not enough, Shapiro-Wilk normality test is also rejecting the null of 'non-normality'. As for the homoscedasticity (equal variance of residuals across the range of predicted values): we can check it using the plot on the bottom left of Figure 4 or a statistical test such as the Breusch-Pagan test. Since the points don't show any specific pattern and seems to be randomly scattered around the horizontal line, the assumption of homoscedasticity is also satisfied. 
-```{r plot5, fig.cap = "Multicollinearity check", fig.width= 6,fig.height=4}
-model <- lm(p_stop ~ (p_workforce + Union_shop + p_SectorA + p_agriculture), data=data_bc)
-collinearity <- check_collinearity(model)
-plot(collinearity)
-```
-For multicollinearity, a glimpse at Figure 5 (which gives the VIF estimate for the 4 different regressors) immediately tells that the assumption is very well verified. Please, note that the interactions term have not been included, simply because high correlation among interaction terms and main effects is normal, and expected. 
-
-Overall, we can safely state that the assumption are successfully verified.
-
-# Conclusions
-This study found that the presence or absence of right-to-work laws does not significantly affect levels of industrial conflict, except if combined with the the size of the agricultural labor force. This comes from the fact that in states with right-to-work laws, the agricultural sector is more important than the manufacturing sector, while in union-shop states, the manufacturing sector is more important than agriculture. When the agricultural sector is relatively non-unionized and significant in a state's economy, it has a major impact on the level of industrial conflict, as predicted by theory. 
-The degree of unionization was identified as the major factor influencing the variation in industrial conflict levels. The conclusion is that right-to-work laws have not limited union strike power, and if section 14b of the Taft-Hartley Act is repealed, there should not be an increase in industrial conflict.
-
-
-
-
+From the table above, we can observe that there are several variables that are significant at level $\alpha=0.05$ but a lot of them are not. For this model, I can apply a step-wise backward elimination procedure to determine the best subset of independent variables that explain the variation in the dependent variable.
 
