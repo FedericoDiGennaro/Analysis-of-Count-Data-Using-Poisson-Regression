@@ -88,9 +88,28 @@ print(plot)
 From this plot, we can notice that the three variables $\textit{Distance}$, $\textit{Population}$ and $\textit{Degree Urb}$ change distribution with respect to the value of the value of the factor variable $\textit{Direction}$. Please notice also that the variables $\textit{Distance}$ and $\textit{Population}$ are really skewed; for this reason it can be worth at some point of the analysis trying to apply a logarithmic transformation to them in fitting our models.
 
 ```{r plot2, fig.cap = "Histogram of outcome variable Apprentices", fig.width= 10,fig.height=6}
-# define dependent
+# Generate some example data
+set.seed(0)
 y <- data[3]
-hist(y$Apprentices, breaks=seq(0,250,10), main="Histogram of the outcome variable", xlab = "Number of Apprentices", ylab = "Frequency")
+
+# Plot histogram of observed y and Poisson distribution
+par(mfrow = c(2, 1), mar = c(4, 4, 2, 1))
+
+# Plot histogram of observed y
+hist(y$Apprentices, breaks=seq(0,250,10), col = "skyblue", border = "black", main = "Histogram of Observed y",
+     xlab = "Value", ylab = "Frequency")
+
+# Plot histogram of Poisson distribution
+lambda <- mean(y$Apprentices)
+x <- 0:max(y$Apprentices)
+poisson_probs <- dpois(x, lambda)
+barplot(poisson_probs, names.arg = x, col = "lightgreen", border = "black",
+        main = "Histogram of Poisson Distribution", xlab = "Value", ylab = "Probability")
+
+# define dependent
+
+#hist(y$Apprentices, breaks=seq(0,250,10), main="Histogram of the outcome variable", #xlab = "Number of Apprentices", ylab = "Frequency")
+
 ```
 With the histogram of the outcome variable $\textit{Apprentices}$, I can observe the shape of the empirical distribution of that variable. Specifically, it is already noticeable that there is an observation that is really far away from the others; this can leads problems such as over-dispersion.
 
@@ -113,51 +132,41 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction,
 d <- summary(poisson.model)$coefficients
 knitr::kable(d, digits = 2)
 ```
-This problems seems to have a lot of problem.
+This model seems to have a lot of problems.
 Firstly, as already guessed in the exploratory data analysis, the model suffers of over-dispersion. The residual deviance $(256.31)$ is bigger than the degrees of freedom $(28)$. For this reason it seems that there is a larger variance in observed counts than expected from the Poisson assumption, meaning that there is over-dispersion and that the Poisson model does not fit well.  
-Another way to observe the over-dispersion, is fitting a quasi-Poisson model: the output in R will have the same coefficient as $\textit{Model 1}$ but from this new model we can extrapolate the real dispersion parameter $(\phi)$ of the data that turns out to be $7731.329$ (i.e. there is a huge over-dispersion because that parameter should be around 1 in a Poisson Regression model). This problem can be related to the extremely un-related observation of variable $\textit{Apprentices}$ that we observed in the EDA. For this reason I am removing this observation from my data and then try to fit again the same model.
+Another way to observe the over-dispersion, is fitting a quasi-Poisson model: the output in R will have the same coefficient as $\textit{Model 1}$ but from this new model we can extrapolate the real dispersion parameter $(\phi)$ of the data that turns out to be $7731.329$ (i.e. there is an incredibly huge over-dispersion because that parameter should be around 1 in a Poisson Regression model). Please observe that we should not be fooled by the super significant coefficients. Those extremely low p-values are exactly the consequences of the over-dispersion issue. Without adjusting for over-dispersion in fact, we use incorrect and artificially small standard errors leading to artificially small p-values for model coefficients.  
 
 **Model 2.**
-As already said above, this model is the same model as $\textit{Model 1}$ where I simply removed the outlier observation that probably made $\textit{Model 1}$ over-dispersive.  
+The problem of over-dispersion, can be caused by the extremely outlier observation of variable $\textit{Apprentices}$ that we already observed in the EDA. For this reason I am removing this observation from my data and then try to fit again the same model stated for $\textit{Model 1}$.  
 Even removing the strange observation, the model still suffers of over-dispersion ($\mu=7.59$ and $\sigma^2=131.86$). In this case otherwise, the dispersion parameter is no longer as large as before $(\phi=18.43)$ and for this reason it is worth trying to work with this data.  
-Due to over-dispersion, modeling this data using the Poisson family assumption yield erroneous p-values regarding model variables. For this reason I decide to use a quasi-Poisson model, that relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same.  
-```{r}
-data <- read_excel("data/data2.xlsx")
-poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
-                    + Direction , data, family = quasipoisson())
-knitr::kable(summary(poisson.model)$coefficients, digits = 2)
-```
-Under these assumptions we can see that the parameters significant at a level $\alpha=0.05$ are $\beta_0$(intercept), $\beta_1$ (coefficient of the variable $\textit{Distance}$) and $\beta_2$ (coefficient of the variable $\textit{Population}$).  
-The significant variable $\textit{Distance}$ as a negative sign in its parameter, meaning that at an increase of $\textit{Distance}$ corresponds a decrease of the number of $\textit{Apprentices}$. The significant variable $\textit{Population}$ as a positive sign in its parameter, meaning that at an increase of $\textit{Distance}$ corresponds an increase of the number of $\textit{Apprentices}$.
-From now on, I will consider this model (Quasi-Poisson regression model) as **base model**.
+Due to the fact that over-dispersion is still present, we should use a Quasi-Poisson model; this model would relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same.  
+Before proceeding with a quasi-poisson model otherwise, I prefer to add complexity at the Poisson Regression model and look at the change of the over-dispersion parameter in these more complex models.
 
 **Model 3.**
 As said in the previous exploratory data analysis, it is worth trying to transform the explanatory variables $\textit{Distance}$ and $\textit{Population}$ with a logarithmic transformation. This can avoid problems coming from the skewednees these variables.
-```{r}
-data$Distance = log(data$Distance)
-data$Population = log(data$Population)
-# Change the names of the variables
-names(data)[names(data) == "Distance"] <- "LogDistance"
-names(data)[names(data) == "Population"] <- "LogPopulation"
-poisson.model<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
-                   + Direction, data , family = poisson(link = "log"),
-                   control = glm.control(maxit = 1000))
-
-poisson.model<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
-                   + Direction, data , family = quasipoisson(),
-                   control = glm.control(maxit = 1000))
-
-knitr::kable(summary(poisson.model)$coefficients, digits = 2)
-```
-From these model, we can observe that the variables $\textit{Distance}$ and $\textit{Population}$ are even more significant then in $\textit{Model 3}$, and their interpretation does not change because the sign of their parameters is still the ones as in $\textit{Model 3}$. This problem is better than $\textit{Model 3}$ MAKE THE STATISTICAL TEST!!!!!!!
-It is also good to notice that the over-dispersion parameter $\phi$ is decreasing too (now it is equal to $3.37$)
+It is good to notice that the over-dispersion parameter $\phi$ is decreasing too (now it is equal to $3.37$). 
+Let's see if also adding interactions between the variables make $\phi$ even lower.
 
 **Model 4.**
-Now I am adding at the Quasi-Poisson model $\textit{Model 4}$ the interactions between the whole variables.
+Now I am adding at the Poisson regression model in $\textit{Model 3}$ the interactions between the whole variables. So I am keeping the logarithm in the variable and I am adding the interactions.  
+In this last model, over-dispersion is not so evident $(\phi=1.46)$ but still it is better to avoid any problem with the dispersion by taking it in some way into account.  Given that the model it is already very complex, I decide to not add further transformations; in this way we have a model that is yes complex, but it is still interpretable in its variable. From now on I will focus on the definitions of the models that that into account the over dispersion and in the selection of the variables to keep in such a model.
+
+**Model 4.1**
+The usual way to keep into account the over-dispersion of the model is to fit a quasi-poisson regression model as already said at the start of this section.
 ```{r}
+data <- read_excel("data/data2.xlsx")
+data$Direction <- as.factor(data$Direction)
+X <- data[-c(1,3)]
+y <- data[3]
+data$Distance = log(data$Distance)
+colnames(data)[colnames(data) == "Distance"] <- "LogDistance"
+data$Population = log(data$Population)
+colnames(data)[colnames(data) == "Population"] <- "LogPopulation"
+
 poisson.model4<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
                     + Direction)^2 , data, family = quasipoisson())
 knitr::kable(summary(poisson.model4)$coefficients, digits = 2)
 ```
-From the table above, we can observe that there are several variables that are significant at level $\alpha=0.05$ but a lot of them are not. For this model, I can apply a step-wise backward elimination procedure to determine the best subset of independent variables that explain the variation in the dependent variable.
+As already said before, in this table the p-values are not erroneous and we can notice that there are five variables that are significant at level $\alpha=0.05$. 
+
 

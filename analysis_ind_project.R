@@ -10,6 +10,7 @@ library(jtools)
 library(sandwich)
 library(goodness-of-fit)
 library(pscl)
+library(AER)
 # load data ---------------------------------------------------------------
 rm(list = ls())
 
@@ -78,6 +79,7 @@ boxplot(X[-4], las = 2, col = c("red", "steelblue", "yellow"), ylab ="(%)")
 poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                       + Direction , data, family = poisson(link = "log"))
 summary(poisson.model)
+dispersion_test(poisson.model)
 
 qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction , data, family = quasipoisson())
@@ -141,6 +143,7 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                     + Direction , data, family = poisson(link = "log"),
                    control = glm.control(maxit = 1000))
 summary(poisson.model)
+dispersiontest(poisson.model)
 
 qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction , data, family = quasipoisson(),
@@ -163,6 +166,7 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction, data , family = poisson(link = "log"),
                    control = glm.control(maxit = 1000))
 summary(poisson.model)
+dispersiontest(poisson.model)
 
 poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction, data , family = quasipoisson(),
@@ -182,6 +186,8 @@ y <- data[3]
 poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                     + Direction)^2 , data, family = poisson(link="log"))
 summary(poisson.model3)
+dispersiontest(poisson.model3)
+
 poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                    + Direction)^2 , data, family = quasipoisson())
 summary(poisson.model3)
@@ -199,6 +205,7 @@ data$Population = log(data$Population)
 poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                    + Direction)^2 , data, family = poisson(link="log"))
 summary(poisson.model3)
+dispersiontest(poisson.model3)
 
 poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                    + Direction)^2 , data, family = quasipoisson())
@@ -206,3 +213,7 @@ summary(poisson.model3)
 
 with(poisson.model3, cbind(res.deviance = deviance, df = df.residual,
                            p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+
+nb.model<-glm.nb(Apprentices ~ (Distance + Population + Degree_Urb
+                                + Direction)^2 , data)
+summary(nb.model)
