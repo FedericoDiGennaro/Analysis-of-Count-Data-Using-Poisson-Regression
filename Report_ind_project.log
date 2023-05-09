@@ -1,11 +1,11 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.1)  2 MAY 2023 17:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.8)  9 MAY 2023 13:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **Report_ind_project.tex
 (./Report_ind_project.tex
 LaTeX2e <2022-11-01> patch level 1
-L3 programming layer <2023-04-20> (c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
+L3 programming layer <2023-05-05> (c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
 (c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/size12.clo
 File: size12.clo 2022/07/02 v1.4n Standard LaTeX file (size option)
@@ -495,12 +495,12 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 [1
 
 {c:/Users/digen/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}]
-<Report_ind_project_files/figure-latex/plot1-1.pdf, id=38, 1084.05pt x 867.24pt>
+<Report_ind_project_files/figure-latex/plot1-1.pdf, id=46, 1084.05pt x 867.24pt>
 File: Report_ind_project_files/figure-latex/plot1-1.pdf Graphic file (type pdf)
 <use Report_ind_project_files/figure-latex/plot1-1.pdf>
 Package pdftex.def Info: Report_ind_project_files/figure-latex/plot1-1.pdf  used on input line 154.
 (pdftex.def)             Requested size: 472.03764pt x 377.63011pt.
-<Report_ind_project_files/figure-latex/plot2-1.pdf, id=39, 722.7pt x 433.62pt>
+<Report_ind_project_files/figure-latex/plot2-1.pdf, id=47, 722.7pt x 433.62pt>
 File: Report_ind_project_files/figure-latex/plot2-1.pdf Graphic file (type pdf)
 <use Report_ind_project_files/figure-latex/plot2-1.pdf>
 Package pdftex.def Info: Report_ind_project_files/figure-latex/plot2-1.pdf  used on input line 172.
@@ -529,39 +529,6 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [4]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 284.
-(c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-Overfull \hbox (34.31902pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ County_Name <chr> "West Lothian", "East Lothian", "Kinross", "Fife", "Peeble~[] 
- []
-
-
-Overfull \hbox (34.284pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ Distance    <dbl> 24, 33, 33, 36, 41, 41, 52, 54, 56, 67, 71, 78, 79, 85, 86~[] 
- []
-
-
-Overfull \hbox (34.298pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ Apprentices <dbl> 22, 44, 3, 41, 9, 2, 5, 23, 11, 9, 13, 26, 0, 5, 3, 1, 2, ~[] 
- []
-
-
-Overfull \hbox (34.284pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ Population  <dbl> 18, 30, 7, 94, 9, 11, 5, 147, 31, 34, 51, 126, 21, 99, 55,~[] 
- []
-
-
-Overfull \hbox (34.291pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ Degree_Urb  <dbl> 37.9, 43.4, 30.3, 41.3, 29.3, 47.4, 41.9, 68.1, 15.2, 31.8~[] 
- []
-
-
-Overfull \hbox (34.31902pt too wide) in paragraph at lines 293--293
-[]\T1/lmtt/m/n/12 ## $ Direction   <dbl> 2, 3, 1, 1, 3, 1, 3, 2, 3, 3, 2, 1, 2, 1, 3, 2, 2, 3, 1, 2~[] 
- []
-
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -569,23 +536,53 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[5] (./Report_ind_project.aux)
+[5]
+<Report_ind_project_files/figure-latex/plot4-1.pdf, id=90, 650.43pt x 433.62pt>
+File: Report_ind_project_files/figure-latex/plot4-1.pdf Graphic file (type pdf)
+<use Report_ind_project_files/figure-latex/plot4-1.pdf>
+Package pdftex.def Info: Report_ind_project_files/figure-latex/plot4-1.pdf  used on input line 363.
+(pdftex.def)             Requested size: 472.04094pt x 314.69397pt.
+<Report_ind_project_files/figure-latex/plot5-1.pdf, id=91, 867.24pt x 578.16pt>
+File: Report_ind_project_files/figure-latex/plot5-1.pdf Graphic file (type pdf)
+<use Report_ind_project_files/figure-latex/plot5-1.pdf>
+Package pdftex.def Info: Report_ind_project_files/figure-latex/plot5-1.pdf  used on input line 376.
+(pdftex.def)             Requested size: 472.03435pt x 314.68954pt.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 390.
+(c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[6 <./Report_ind_project_files/figure-latex/plot4-1.pdf>]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[7 <./Report_ind_project_files/figure-latex/plot5-1.pdf>] (./Report_ind_project.aux)
 Package rerunfilecheck Info: File `Report_ind_project.out' has not changed.
-(rerunfilecheck)             Checksum: 00A66E8E93FE0881B200EDC4E129DED7;533.
+(rerunfilecheck)             Checksum: EA1480773493F4EE8D09659CF187B83A;843.
  ) 
 Here is how much of TeX's memory you used:
- 11438 strings out of 477961
- 179902 string characters out of 5836923
- 1874068 words of memory out of 5000000
- 31445 multiletter control sequences out of 15000+600000
+ 11473 strings out of 478007
+ 181036 string characters out of 5837971
+ 1875242 words of memory out of 5000000
+ 31423 multiletter control sequences out of 15000+600000
  580413 words of font info for 79 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,11n,76p,381b,541s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,76p,381b,591s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmro12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Report_ind_project.pdf (5 pages, 285058 bytes).
+Output written on Report_ind_project.pdf (7 pages, 321464 bytes).
 PDF statistics:
- 146 PDF objects out of 1000 (max. 8388607)
- 107 compressed objects within 2 object streams
- 18 named destinations out of 1000 (max. 500000)
- 43 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 192 PDF objects out of 1000 (max. 8388607)
+ 146 compressed objects within 2 object streams
+ 27 named destinations out of 1000 (max. 500000)
+ 69 words of extra memory for PDF output out of 10000 (max. 10000000)
 

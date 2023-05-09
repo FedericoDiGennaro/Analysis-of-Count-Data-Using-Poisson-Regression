@@ -11,6 +11,9 @@ library(sandwich)
 library(goodness-of-fit)
 library(pscl)
 library(AER)
+library(AICcmodavg)
+library(performance)
+
 # load data ---------------------------------------------------------------
 rm(list = ls())
 
@@ -81,9 +84,9 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
 summary(poisson.model)
 dispersion_test(poisson.model)
 
-qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+qpoisson.model1<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction , data, family = quasipoisson())
-summary(qpoisson.model)
+summary(qpoisson.model1)
 
 cov.m1 <- vcovHC(poisson.model, type="HC0")
 std.err <- sqrt(diag(cov.m1))
@@ -145,10 +148,10 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
 summary(poisson.model)
 dispersiontest(poisson.model)
 
-qpoisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+qpoisson.model1<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction , data, family = quasipoisson(),
                    control = glm.control(maxit = 1000))
-summary(qpoisson.model)
+summary(qpoisson.model1)
 
 with(poisson.model, cbind(res.deviance = deviance, df = df.residual,
                          p = pchisq(deviance, df.residual, lower.tail=FALSE)))
@@ -166,54 +169,72 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction, data , family = poisson(link = "log"),
                    control = glm.control(maxit = 1000))
 summary(poisson.model)
-dispersiontest(poisson.model)
 
-poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
+
+qpoisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction, data , family = quasipoisson(),
                    control = glm.control(maxit = 1000))
-summary(poisson.model)
+summary(qpoisson.model2)
 
 # MODEL 4: interactions ---------------------------------------------------------------------
 ggpairs(X)
 
-#without the log
-rm(list = ls())
-data <- read_excel("data/data2.xlsx")
-glimpse(data)
-data$Direction <- as.factor(data$Direction)
-X <- data[-c(1,3)]
-y <- data[3]
-poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
-                                    + Direction)^2 , data, family = poisson(link="log"))
-summary(poisson.model3)
-dispersiontest(poisson.model3)
-
-poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
-                                   + Direction)^2 , data, family = quasipoisson())
-summary(poisson.model3)
-
 #with the log
-rm(list = ls())
-data <- read_excel("data/data2.xlsx")
-glimpse(data)
-data$Direction <- as.factor(data$Direction)
-X <- data[-c(1,3)]
-y <- data[3]
-data$Distance = log(data$Distance)
-data$Population = log(data$Population)
 
 poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                    + Direction)^2 , data, family = poisson(link="log"))
 summary(poisson.model3)
 dispersiontest(poisson.model3)
 
-poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
+qpoisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
                                    + Direction)^2 , data, family = quasipoisson())
-summary(poisson.model3)
+summary(qpoisson.model3)
 
-with(poisson.model3, cbind(res.deviance = deviance, df = df.residual,
-                           p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+#F test to compare two quasi-poisson models (NESTED, H0: reduced model is sufficient)
+drop_in_dev <- anova(qpoisson.model2, qpoisson.model3, test = "F")
+drop_in_dev
 
 nb.model<-glm.nb(Apprentices ~ (Distance + Population + Degree_Urb
                                 + Direction)^2 , data)
 summary(nb.model)
+
+#MODEL ASSESSMENT
+
+#1) linearity with log count
+predicted <- predict(qpoisson.model3, type = "link")
+observed <- y$Apprentices
+
+plot(predicted, observed, xlab = "Predicted Linear Predictor", ylab = "Observed Log Count")
+abline(lm(observed ~ predicted), col = "red")
+
+#2) indep obs
+
+residuals <- residuals(qpoisson.model3)
+# Create a scatterplot of residuals against each other
+plot(residuals[-length(residuals)], residuals[-1], xlab = "Residuals (i)", ylab = "Residuals (i+1)")
+
+par(mfrow = c(2,2))
+# Plot normality check
+plot(check_normality(qpoisson.model3))
+# Plot outliers check
+plot(check_outliers(qpoisson.model3))
+# Plot distribution check
+plot(check_distribution(qpoisson.model3))
+# Plot overdispersion check
+plot(check_overdispersion(qpoisson.model3))
+
+check_autocorrelation(qpoisson.model3)
+check_zeroinflation(qpoisson.model3)
+check_independence(qpoisson.model3)
+
+performance::check_model(qpoisson.model2, plot = FALSE)
+
+par(mfrow = c(1,1))
+# Extract the residuals
+my_resid <- resid(qpoisson.model3, type = "pearson")
+# Plot the residuals against the fitted values
+plot(qpoisson.model3$fitted.values, my_resid)
+
+plot(qpoisson.model3, which=1)
+
+check_zeroinflation(qpoisson.model3)

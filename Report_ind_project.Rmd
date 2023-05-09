@@ -115,7 +115,7 @@ With the histogram of the outcome variable $\textit{Apprentices}$, I can observe
 
 # Model Fitting
 ## Model highlights:
-Let $$ Y = Apprentices; \;
+$$ Y = Apprentices; \;
 X_1 = Distance; \;
 X_2 = Population; \;
 X_3 = Degree\_Urb; \;
@@ -139,20 +139,20 @@ Another way to observe the over-dispersion, is fitting a quasi-Poisson model: th
 **Model 2.**
 The problem of over-dispersion, can be caused by the extremely outlier observation of variable $\textit{Apprentices}$ that we already observed in the EDA. For this reason I am removing this observation from my data and then try to fit again the same model stated for $\textit{Model 1}$.  
 Even removing the strange observation, the model still suffers of over-dispersion ($\mu=7.59$ and $\sigma^2=131.86$). In this case otherwise, the dispersion parameter is no longer as large as before $(\phi=18.43)$ and for this reason it is worth trying to work with this data.  
-Due to the fact that over-dispersion is still present, we should use a Quasi-Poisson model; this model would relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same.  
-Before proceeding with a quasi-poisson model otherwise, I prefer to add complexity at the Poisson Regression model and look at the change of the over-dispersion parameter in these more complex models.
+Due to the fact that over-dispersion is still present, we should use a Quasi-Poisson model; this model would relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same. For this reason, from now on I will work with Quasi-Poisson models and I will try to see if adding complexity leads to models that explain better the data.  
+(Residual deviance of Model 1 (on 27 degrees of freedom) is equal to $256.31$).
 
 **Model 3.**
-As said in the previous exploratory data analysis, it is worth trying to transform the explanatory variables $\textit{Distance}$ and $\textit{Population}$ with a logarithmic transformation. This can avoid problems coming from the skewednees these variables.
+As said in the previous exploratory data analysis, it is worth trying to transform the explanatory variables $\textit{Distance}$ and $\textit{Population}$ with a logarithmic transformation. This can avoid problems coming from the skewednees these variables.  
+I test now whether or not there is statistical evidence that this new model is significantly better than Model 2. To do so, I use a ????? test.
+$$ H_0: \text{Model 2 is sufficient} $$
+
 It is good to notice that the over-dispersion parameter $\phi$ is decreasing too (now it is equal to $3.37$). 
 Let's see if also adding interactions between the variables make $\phi$ even lower.
 
 **Model 4.**
-Now I am adding at the Poisson regression model in $\textit{Model 3}$ the interactions between the whole variables. So I am keeping the logarithm in the variable and I am adding the interactions.  
-In this last model, over-dispersion is not so evident $(\phi=1.46)$ but still it is better to avoid any problem with the dispersion by taking it in some way into account.  Given that the model it is already very complex, I decide to not add further transformations; in this way we have a model that is yes complex, but it is still interpretable in its variable. From now on I will focus on the definitions of the models that that into account the over dispersion and in the selection of the variables to keep in such a model.
-
-**Model 4.1**
-The usual way to keep into account the over-dispersion of the model is to fit a quasi-poisson regression model as already said at the start of this section.
+Now I am adding at the Quasi-Poisson regression model in $\textit{Model 3}$ the interactions between the whole variables. So I am keeping the logarithm in the variable and I am adding the interactions.  
+Given that the model it is already very complex, I decide to not add further transformations; in this way we have a model that is yes complex, but it is still interpretable in its variables. 
 ```{r}
 data <- read_excel("data/data2.xlsx")
 data$Direction <- as.factor(data$Direction)
@@ -163,10 +163,57 @@ colnames(data)[colnames(data) == "Distance"] <- "LogDistance"
 data$Population = log(data$Population)
 colnames(data)[colnames(data) == "Population"] <- "LogPopulation"
 
-poisson.model4<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
+qpoisson.model4<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
                     + Direction)^2 , data, family = quasipoisson())
-knitr::kable(summary(poisson.model4)$coefficients, digits = 2)
+knitr::kable(summary(qpoisson.model4)$coefficients, digits = 2)
 ```
-As already said before, in this table the p-values are not erroneous and we can notice that there are five variables that are significant at level $\alpha=0.05$. 
+As already said before, in this table the p-values are not erroneous and we can notice that there are five variables that are significant at level $\alpha=0.05$.  
+In order to see if this new model is statistically significant better than Model 3, I use an F-test [REFERENCE Venables and Ripley Modern Applied Statistics in S].  
+Drop-in-deviance tests in fact, can be adjusted for overdispersion in the quasi-Poisson model. In this case, we can divide the test statistic (per degree of freedom) by the estimated dispersion parameter and compare the result to an F-distribution with the difference in the model degrees of freedom for the numerator and the degrees of freedom for the larger model in the denominator.
+$$ H_0: \text{The reduced model (Model 3) is sufficient} $$
+$$F=\frac{\frac{\text{drop in deviance}}{\text{difference in df}}}{\phi} (statistic) $$
+```{r}
+qpoisson.model3<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
+                                   + Direction)^2 , data, family = quasipoisson())
 
+qpoisson.model2<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
+                   + Direction, data , family = quasipoisson(),
+                   control = glm.control(maxit = 1000))
 
+drop_in_dev <- anova(qpoisson.model2, qpoisson.model3, test = "F")
+knitr::kable(drop_in_dev, digits = 2)
+```
+As we can see from the anova table above, the p-value of such a test is really small; for this reason the preferred model is Model 4.
+
+# Model assessment
+At this point, it is important to verify whether or not the assumptions of the Quasi-Poisson model preferred so far (Model 4) are satisfied. The assumptions of a Quasi-Poisson model are the following:  
+1) There is a linear relationship between the logarithm of the frequency or rate and equal increment changes in the explanatory variable.  
+3) Errors are independent of each other.  
+
+Please notice that in the Quasi-Poisson regression we have relaxed the assumption that the variance is equal to the mean.
+
+In order to check these assumptions, we can look at the following plots.
+```{r plot4, fig.cap = "Checking model assumptions", fig.width= 9,fig.height=6}
+plot(qpoisson.model3, which=1)
+```
+
+Furthermore, it is a good practice for this model to check other possible issues such
+as over-dispersion, outlier presence, collinearity, etc...
+```{r plot5, fig.cap = "Checking further issues", fig.width= 12,fig.height=8}
+library(gridExtra)
+# Generate the plots
+normality_plot <- plot(check_normality(qpoisson.model3))
+outliers_plot <- plot(check_outliers(qpoisson.model3))
+multi_coll_plot <- plot(check_collinearity(qpoisson.model2))
+overdispersion_plot <- plot(check_overdispersion(qpoisson.model3))
+
+# Create the table
+grid.arrange(normality_plot, outliers_plot, multi_coll_plot, overdispersion_plot, ncol = 2)
+
+```
+From the plots above, we can see that the model is over-dispersive, and this makes our intuition of fitting a Quasi-Poisson regression model right and we can also notice that the data does not present outliers. Finally, it is important to notice that the plot of multicollinearity was made without the interaction variables: if the model contains interaction variables in fact, VIFs might be inflated.  
+Notice that a zero-inflation check was carried out with the performance package and there is no evidence that the model is suffering of zero-inflation problem.
+
+# Final model and conclusion
+From the analysis above, the final model is a Quasi-Poisson model 
+$$
