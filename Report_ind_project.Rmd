@@ -22,25 +22,22 @@ output: pdf_document
 
 # Introduction 
 This statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 regions in Scotland.
-The study utilizes the following four variables to try to predict the number of apprentices migration:
+The study$^{[1]}$ utilizes the following four variables to try to predict the number of apprentices migrating:
 
-* Distance: Distance (in km ???) from the region to Edinburgh. 
+* Distance: Distance from the region to Edinburgh. 
 * Population: Population (1000s) in the region. 
 * Degree_Urb: Degree of urbanization of the region (in %). 
 * Direction: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
 
-The outcome variable, as said before, is the number apprentices migration that in this analysis we called "Apprentices". 
-It is immediately important to notice the variables we are working with; in particular, we can notice that the outcome variable "Apprentices" can be seen as "count data", taking only discrete values. For that reason, we will not end up with an outcome normally distributed and so linear regression cannot be used.
-
-From literature otherwise, we know that Poisson regression is suitable to analyse count data (in this case our $Y$ is a the number of apprentices, i.e. it can be seen as count data).
-Poisson regression is in the family of the so-called Generalized Linear Models (GLM).  
-Generalized Linear Models are models in which response variables follow a distribution other than the normal distribution. In GLMs, the response variable is connected to the linear predictor $\eta =  \beta_0 + \beta_1X_1 + ... + \beta_k X_k$ by a link function $g(\cdot)$, that describe the functional relationship between $\eta$ and the mathematical expectation of the response variable: $g(\mathbb{E}[Y|x])=\eta$. For Poisson Regression, $g(x)=log(x)$. 
-
-Poisson regression relies on Poisson distribution; we say that a discrete random variable X is distributed as a Poisson with parameter $\lambda$ ($X \sim Poisson(\lambda)$) if it has the following density function: $$\mathbb{P}(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}$$
+In this analysis, we are focusing on the number of apprentices among migrants, which we will refer to as our $\textit{Apprentices}$. It is crucial to note that our outcome variable can be classified as count data, taking only discrete values. As such, it is important to acknowledge that our outcome will not follow a normal distribution (that is continuous), and therefore, traditional linear regression methods cannot be used. Given the nature of our data, we will need to explore alternative statistical methods that are more appropriate for count data analysis. By doing so, we can ensure that our results are both accurate and reliable. From the literature otherwise, we know that Poisson regression is suitable to analyze count data (in this case our $Y$ is the number of $\textit{Apprentices}$, i.e. it can be seen as count data).
+Poisson regression is in the family of the so-called Generalized Linear Models (GLM). In GLMs, the response variable is related to the linear predictor, denoted by $\eta = \beta_0 + \beta_1X_1 + ... + \beta_k X_k$, through a link function $g(\cdot)$. The link function establishes the relationship between the linear predictor and the expected value of the response variable, denoted by $\mathbb{E}[Y|x]$, such that $g(\mathbb{E}[Y|x])=\eta$.
+In the context of Poisson regression (that relies on Poisson distribution), the link function is commonly defined as $g(x)=log(x)$. This specification is particularly useful when working with count data, such as the number of apprentices among migrants in our analysis. 
+\newpage
 
 # Exploratory Data Analysis
-Before starting in fitting the model, it is a good practice to explore the available data. In this way, we can already notice some insights about what the model will tell us and in which way each variable can effect the model itself.
-The dataset provided has 33 rows, corresponding to the different counties of Scotland under study, and for each row we have the dependent variable under study (Apprentices), and the registered values for the regressors mentioned in the introduction. 
+Before fitting a Poisson regression model, it is important to conduct exploratory data analysis. By doing so, we can gain insights into the relationships between variables and identify any potential issues or outliers in the data.  
+In our analysis, we are working with a dataset that consists of 33 observations, each corresponding to a different county in Scotland. For each observation, we have recorded values for the dependent variable of interest, denoted by $\textit{Apprentices}$, as well as the predictor variables that were introduced earlier in the report.
+Conducting exploratory data analysis on this dataset can provide valuable insights into the relationships between variables and the distribution of the data. Additionally, it can help us identify any outliers or missing values that may need to be addressed before fitting the Poisson regression model. 
 
 ```{r setup, include = FALSE}
 # Setup options for R Markdown
@@ -51,7 +48,16 @@ library(readxl)
 library(MASS) # for BOXCOX
 library(car) # for VIF
 library(performance) # for nicer multicollinearity plot
-library(xtable)
+library(jtools)
+library(sandwich)
+library(pscl)
+library(AER)
+library(AICcmodavg)
+library(performance)
+library(gridExtra)
+library(dplyr)
+library(lmtest)
+
 data <- read_excel("data/data.xlsx")
 
 knitr::opts_chunk$set(
@@ -66,7 +72,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r plot1, fig.cap = "Pairs Plot of the explanatory variables. Their distribution is divided with respect to the value of the variable Direction (factor)", fig.width= 15,fig.height=12}
+```{r plot1, fig.cap = "Pair lot of the regressors, divided by the factor variable Direction", fig.width= 15,fig.height=12}
 # define regressors
 data$Direction <- as.factor(data$Direction)
 X <- data[-c(1,3)]
@@ -85,7 +91,8 @@ plot <- plot +
 # Display the plot
 print(plot)
 ```
-From this plot, we can notice that the three variables $\textit{Distance}$, $\textit{Population}$ and $\textit{Degree Urb}$ change distribution with respect to the value of the value of the factor variable $\textit{Direction}$. Please notice also that the variables $\textit{Distance}$ and $\textit{Population}$ are really skewed; for this reason it can be worth at some point of the analysis trying to apply a logarithmic transformation to them in fitting our models.
+Upon examining the plot, we can observe that the distributions of the variables $\textit{Distance}$, $\textit{Population}$, and $\textit{Degree Urb}$ differ depending on the value of the factor variable $\textit{Direction}$. Additionally, it is worth noting that the variables $\textit{Distance}$ and $\textit{Population}$ exhibit significant skewness.
+Given their skewed distributions, it may be beneficial to apply a logarithmic transformation to these variables before fitting our Poisson regression models. This transformation can help to reduce the effect of extreme values on the results and improve the model's performance.
 
 ```{r plot2, fig.cap = "Histogram of outcome variable Apprentices", fig.width= 10,fig.height=6}
 # Generate some example data
@@ -111,7 +118,10 @@ barplot(poisson_probs, names.arg = x, col = "lightgreen", border = "black",
 #hist(y$Apprentices, breaks=seq(0,250,10), main="Histogram of the outcome variable", #xlab = "Number of Apprentices", ylab = "Frequency")
 
 ```
-With the histogram of the outcome variable $\textit{Apprentices}$, I can observe the shape of the empirical distribution of that variable. Specifically, it is already noticeable that there is an observation that is really far away from the others; this can leads problems such as over-dispersion.
+The histogram of the dependent variable $\textit{Apprentices}$ provides insight into its empirical distribution. Upon examination of the histogram, it is evident that there is an outlier observation that deviates significantly from the others. This outlier observation can lead to issues such as over-dispersion, which can affect the accuracy of the Poisson regression model.  
+It may be necessary to address this outlier observation before fitting the Poisson regression model to prevent potential issues with over-dispersion.
+
+\newpage
 
 # Model Fitting
 ## Model highlights:
@@ -120,100 +130,267 @@ X_1 = Distance; \;
 X_2 = Population; \;
 X_3 = Degree\_Urb; \;
 X_4 = Direction$$
-As already said in the introduction, we will use Poisson Regression to determine whether there is or not effect between explanatory variables $X_i, i \in \{1,2,3,4\}$ and the outcome variable $Y$.
+As already said in the introduction, we will use Poisson Regression to determine whether there is or not an effect between explanatory variables $X_i, i \in \{1,2,3,4\}$ and the outcome variable $Y$.
 
-**Model 1.**  
-Let's now define the first model in the study. As already said before, let $$\eta =  \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4 X_4$$ Hence, the model is defined as $$log(\mathbb{E}[Y|x])=\eta$$
-
+**Model 1: Poisson regression model**  
+Let's now define the first model in the study.  
+$$\textit{Model 1}: \\
+Y|X_1,...,X_4 \sim Pois(\mu).$$ 
+$$\mu = exp(\eta),\ \eta=\beta_0 + \beta_1X_1 + ... + \beta_4 X_4.$$
+The coefficients $\beta_i$ of a Poisson Regression model are estimated using maximum likelihood estimation. 
 ```{r}
-poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data,
-                   family=poisson(link = "log"))
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data, family=poisson(link = "log"))
 # Example table data
 d <- summary(poisson.model)$coefficients
 knitr::kable(d, digits = 2)
 ```
-This model seems to have a lot of problems.
-Firstly, as already guessed in the exploratory data analysis, the model suffers of over-dispersion. The residual deviance $(256.31)$ is bigger than the degrees of freedom $(28)$. For this reason it seems that there is a larger variance in observed counts than expected from the Poisson assumption, meaning that there is over-dispersion and that the Poisson model does not fit well.  
-Another way to observe the over-dispersion, is fitting a quasi-Poisson model: the output in R will have the same coefficient as $\textit{Model 1}$ but from this new model we can extrapolate the real dispersion parameter $(\phi)$ of the data that turns out to be $7731.329$ (i.e. there is an incredibly huge over-dispersion because that parameter should be around 1 in a Poisson Regression model). Please observe that we should not be fooled by the super significant coefficients. Those extremely low p-values are exactly the consequences of the over-dispersion issue. Without adjusting for over-dispersion in fact, we use incorrect and artificially small standard errors leading to artificially small p-values for model coefficients.  
+The Poisson regression model in question appears to be afflicted with several issues. Firstly, as suggested in the exploratory data analysis, the model suffers from over-dispersion. To confirm this, we can fit a Quasi-Poisson model in R that outputs the estimate of the dispersion parameter $(\phi)$, which is found to be $7731.329$. This value indicates an extremely large degree of over-dispersion, as the dispersion parameter should typically be close to 1 in a Poisson regression model.  
+It is essential to note that the significant coefficients in the original Poisson model may be misleading (that's why I decided to not show them here), as they are likely the result of the over-dispersion issue. The incorrect and artificially small standard errors that result from failing to adjust for over-dispersion can lead to artificially small p-values for the model coefficients.  
+```{r}
+poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data, family=poisson(link = "log"))
+```
 
-**Model 2.**
-The problem of over-dispersion, can be caused by the extremely outlier observation of variable $\textit{Apprentices}$ that we already observed in the EDA. For this reason I am removing this observation from my data and then try to fit again the same model stated for $\textit{Model 1}$.  
-Even removing the strange observation, the model still suffers of over-dispersion ($\mu=7.59$ and $\sigma^2=131.86$). In this case otherwise, the dispersion parameter is no longer as large as before $(\phi=18.43)$ and for this reason it is worth trying to work with this data.  
-Due to the fact that over-dispersion is still present, we should use a Quasi-Poisson model; this model would relax the assumption of $\phi=1$. In this new model, the additional over-dispersion parameter $\phi=18.43$ might capture a large amount of the variation of the response variable. Note that since the underlying data is the same, the residuals deviance is the same. For this reason, from now on I will work with Quasi-Poisson models and I will try to see if adding complexity leads to models that explain better the data.  
-(Residual deviance of Model 1 (on 27 degrees of freedom) is equal to $256.31$).
+**Model 2: Base negative binomial model**
+It is important to note that over-dispersion can have a significant impact on the model's results, as it can lead to incorrect conclusions about the relationships between the variables. Removing the outlier observation noticed in the EDA reduces the over-dispersion but does not remove it.  
+For this reason, it is better to use a model that takes it into account; this such a model can be a Quasi-Poisson model or a negative binomial model. The Quasi-Poisson model only provides a rough estimate of the dispersion parameter, so it may be necessary to consider alternative models, such as the Negative Binomial Regression model, which explicitly models over-dispersion$^{[2]}$.  
+For this reason from now on I will focus on fitting a negative binomial model. I chose a negative binomial model over a quasi-poisson model because when checking if the variance and the mean are proportional in the "mean-variance plot" (or "dispersion plot"), the points does not seems to be randomly scattered around a horizontal line at zero. Recall that the coefficients of a negative binomial model are implemented using maximum likelihood estimation. 
+```{r plot3, fig.cap = "mean-variance plot", fig.width= 8,fig.height=5}
+data <- read_excel("data/data2.xlsx")
+data$Direction <- as.factor(data$Direction)
 
-**Model 3.**
-As said in the previous exploratory data analysis, it is worth trying to transform the explanatory variables $\textit{Distance}$ and $\textit{Population}$ with a logarithmic transformation. This can avoid problems coming from the skewednees these variables.  
-I test now whether or not there is statistical evidence that this new model is significantly better than Model 2. To do so, I use a ????? test.
-$$ H_0: \text{Model 2 is sufficient} $$
+poisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data, family=poisson(link = "log"))
+yhat <- predict(poisson.model2, type = "response")
+plot(yhat, residuals(poisson.model2, type = "pearson"),
+     xlab = "Fitted Values", ylab = "Pearson Residuals")
+```
+Given that the points form a curve that slopes downward from left to right, the variance increases slower than the mean.  
+The form of the model equation for negative binomial regression is the same as that for Poisson regression: the log of the outcome is predicted with a linear combination of the predictors.
 
-It is good to notice that the over-dispersion parameter $\phi$ is decreasing too (now it is equal to $3.37$). 
-Let's see if also adding interactions between the variables make $\phi$ even lower.
+$$\textit{Model 2}: \\
+Y|X_1,...,X_4 \sim NegBin(\mu,\alpha).$$ 
+$$\mu = exp(\eta),\ \eta=\beta_0 + \beta_1X_1 + ... + \beta_4 X_4.$$ $$\alpha \text{ is the over-dispersion parameter}.$$
 
-**Model 4.**
-Now I am adding at the Quasi-Poisson regression model in $\textit{Model 3}$ the interactions between the whole variables. So I am keeping the logarithm in the variable and I am adding the interactions.  
-Given that the model it is already very complex, I decide to not add further transformations; in this way we have a model that is yes complex, but it is still interpretable in its variables. 
 ```{r}
 data <- read_excel("data/data2.xlsx")
 data$Direction <- as.factor(data$Direction)
-X <- data[-c(1,3)]
-y <- data[3]
+nb_model <- glm.nb(Apprentices ~ Distance + Population + 
+                     Degree_Urb + Direction, data=data)
+# Example table data
+d <- summary(nb_model)$coefficients
+knitr::kable(d, digits = 2)
+```
+
+**Model 3: Negative binomial model with log-transformations**
+As we previously observed in the exploratory data analysis, the variables $\textit{Distance}$ and $\textit{Population}$ exhibit skewness, which can cause issues when fitting a model. A common solution to this problem is to apply a logarithmic transformation to these variables. By doing so, we can better capture the relationship between these predictors and the response variable $\textit{Apprentices}$. Please notice that the mathematical definition of $\textit{Model 3}$ is exactly the same as the one of $\textit{Model 2}$ with the exception of the $log$ of the variables $X_1$ and $X_2$. 
+
+Let $X_1'=log(x_1)$, $X_2'=log(x_2)$, $X_3'=X_3$, $X_4'=X_4$; hence, we can define $Model 3$ as:  
+$$\textit{Model 3}: \\
+Y|X_1',..,X_4' \sim NegBin(\mu,\alpha) $$ 
+$$\mu = exp(\eta), \ \eta=\beta_0 + \beta_1X_1' + ... + \beta_4 X_4'.$$
+$$\alpha \text{ is the over-dispersion parameter}.$$
+
+To assess the impact of this transformation, we compare a new model, denoted $\textit{Model 3}$, to the original $\textit{Model 2}$. While these models are not nested, we can still use the AIC as a metric for model selection. A lower AIC indicates a better model fit. In this case, $\textit{Model 3}$ has a lower AIC of $166.62$ compared to $\textit{Model 2}$ with an AIC of $184.94$. This indicates that $\textit{Model 3}$ is a better fit for our data and provides stronger statistical evidence for the relationship between our predictors and the response variable.
+```{r}
+data <- read_excel("data/data2.xlsx")
+data$Direction <- as.factor(data$Direction)
+
 data$Distance = log(data$Distance)
 colnames(data)[colnames(data) == "Distance"] <- "LogDistance"
 data$Population = log(data$Population)
 colnames(data)[colnames(data) == "Population"] <- "LogPopulation"
 
-qpoisson.model4<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
-                    + Direction)^2 , data, family = quasipoisson())
-knitr::kable(summary(qpoisson.model4)$coefficients, digits = 2)
+nb_model2<-glm.nb(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb + Direction), data)
+knitr::kable(summary(nb_model2)$coefficients, digits = 2)
 ```
-As already said before, in this table the p-values are not erroneous and we can notice that there are five variables that are significant at level $\alpha=0.05$.  
-In order to see if this new model is statistically significant better than Model 3, I use an F-test [REFERENCE Venables and Ripley Modern Applied Statistics in S].  
-Drop-in-deviance tests in fact, can be adjusted for overdispersion in the quasi-Poisson model. In this case, we can divide the test statistic (per degree of freedom) by the estimated dispersion parameter and compare the result to an F-distribution with the difference in the model degrees of freedom for the numerator and the degrees of freedom for the larger model in the denominator.
-$$ H_0: \text{The reduced model (Model 3) is sufficient} $$
-$$F=\frac{\frac{\text{drop in deviance}}{\text{difference in df}}}{\phi} (statistic) $$
+
+**Model 4: Negative binomial model with log-transformations and interactions**
+To improve the model's ability to explain the data, I have added complexity to $\textit{Model 3}$ by including interactions between all the exogenous variables. 
+Let $Z_{i,j}=X_i' X_j'$  $\forall i,j=1,...4,$ $j>i$. Then we define $Model 4$ as:
+
+$$\textit{Model 4}: \\
+Y|X_1',..,X_4', Z_{1,2}, ..., Z_{3,4} \sim NegBin(\mu,\alpha).$$ 
+$$\mu = exp(\eta),\ \alpha \text{ is the over-dispersion parameter}.$$
+
+This time $\eta =  \beta_0 + \beta_1X_1' + ... + \beta_4 X_4'+ \beta_{1,2}Z_{1,2} + ... + \beta_{3,4}Z_{3,4}$
+You can have a look at Table \ref{tab:M3} in the appendix.
 ```{r}
-qpoisson.model3<-glm(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb
-                                   + Direction)^2 , data, family = quasipoisson())
+nb_model3<-glm.nb(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb + Direction)^2, data)
+knitr::kable(summary(nb_model3)$coefficients, digits = 2)
+``` 
+To test whether $\textit{Model 4}$ is better than $\textit{Model 3}$, we can use a likelihood ratio test. 
+$$\mathcal{H}_0: \text{Model 3 is true}$$
+$$\mathcal{H}_1: \text{Model 4 is true}$$
 
-qpoisson.model2<-glm(Apprentices ~ LogDistance + LogPopulation + Degree_Urb
-                   + Direction, data , family = quasipoisson(),
-                   control = glm.control(maxit = 1000))
-
-drop_in_dev <- anova(qpoisson.model2, qpoisson.model3, test = "F")
-knitr::kable(drop_in_dev, digits = 2)
+```{r}
+knitr::kable(lrtest(nb_model2, nb_model3), digits = 2)
 ```
-As we can see from the anova table above, the p-value of such a test is really small; for this reason the preferred model is Model 4.
+As we can see from the results above, the p-value of such a test is between 0.05 and 0.1 and so the result of the test crucially depends on the level of significance $\alpha$ we chose; the preferred model at a level 0.1 is $\textit{Model 4}$ but the preferred model at level 0.05 is $\textit{Model 3}$. Given that the AIC is lower for $\textit{Model 3}$ $(200 \ vs \ 166.62)$, we can argue that adding complexity does not improve too much the fitting. For this reason, the preferred model remains $\textit{Model 3}$.
+
+**Final Model.**
+Starting from $\textit{Model 3}$, I perform a stepwise selection based on the Akaike Information Criterion (AIC), a popular method to compare different models. In this way, we can balance the goodness-of-fit and the complexity of our model, and choose the one that best represents the underlying data-generating process.  
+After the selection, the variables keept are:
+$$
+X_1' = log(Distance); \;
+X_2' = log(Population); \;
+X_3' = Degree\_Urb; \;
+$$
+Hence, the final model fitted is:
+$$
+\textit{Final Model}: \hat{y} = exp(7.33-1.81X_1'+0.83X_2'-0.02X_3').
+$$
+In this Final model, all the coefficients are significant at level 0.05.
+\newpage
 
 # Model assessment
-At this point, it is important to verify whether or not the assumptions of the Quasi-Poisson model preferred so far (Model 4) are satisfied. The assumptions of a Quasi-Poisson model are the following:  
-1) There is a linear relationship between the logarithm of the frequency or rate and equal increment changes in the explanatory variable.  
-3) Errors are independent of each other.  
+At this point, it is important to verify whether or not the assumptions of the $\textit{Final Model}$ (Negative Binomial Regression model) are satisfied. The assumption of a Negative Binomial Regression model are the following:  
 
-Please notice that in the Quasi-Poisson regression we have relaxed the assumption that the variance is equal to the mean.
-
-In order to check these assumptions, we can look at the following plots.
-```{r plot4, fig.cap = "Checking model assumptions", fig.width= 9,fig.height=6}
-plot(qpoisson.model3, which=1)
+**1)** $Y|X_1', X_2', X_3' \sim NegBin(\mu,\alpha)$ where $\mu = exp(\hat{\beta_0} + \hat{\beta_1}X_1' + \hat{\beta_2}X_2' + \hat{\beta_3}X_3')$ and $\alpha \text{ is the over-dispersion parameter}$.  
+To do so, I use a diagnostic plot provided by the package $\textit{performance}$.
+```{r plot4, fig.cap = "diagnostic plot for distribution", fig.width= 8,fig.height=6.5}
+final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
+plot(check_distribution(final_model))
 ```
+From the above plot, we can see that the distribution that better fits the data is a negative binomial. Using the usual euristic to check wheter or not it is better to fit a zero-inflated model, it turns out that there is no such a big evidence to do so.  
 
-Furthermore, it is a good practice for this model to check other possible issues such
-as over-dispersion, outlier presence, collinearity, etc...
-```{r plot5, fig.cap = "Checking further issues", fig.width= 12,fig.height=8}
-library(gridExtra)
-# Generate the plots
-normality_plot <- plot(check_normality(qpoisson.model3))
-outliers_plot <- plot(check_outliers(qpoisson.model3))
-multi_coll_plot <- plot(check_collinearity(qpoisson.model2))
-overdispersion_plot <- plot(check_overdispersion(qpoisson.model3))
+**2)** The observations are independent.  
+There is no way to check this assumption because it depends on how the data were collected; we have to assume that it is true.
 
-# Create the table
-grid.arrange(normality_plot, outliers_plot, multi_coll_plot, overdispersion_plot, ncol = 2)
+**3)** There is a linear relationship between log count and linear predictor.  
+```{r plot5, fig.cap = "diagnostic plot of residuals vs fitted", fig.width= 8,fig.height=6.5}
 
+# Extract the residuals and linear predictor values
+residuals <- residuals(final_model, type = "pearson")
+linear_predictor <- predict(final_model, type = "link")
+
+# Create a scatter plot of the residuals versus linear predictor values
+plot(linear_predictor, residuals, xlab = "Linear Predictor", ylab = "Residuals",
+     main = "Residuals vs Linear Predictor Plot")
+
+# Add a horizontal line at y=0 to indicate the zero line
+abline(h = 0, lty = 2)
+
+# Check for any patterns or trends in the scatter plot
 ```
-From the plots above, we can see that the model is over-dispersive, and this makes our intuition of fitting a Quasi-Poisson regression model right and we can also notice that the data does not present outliers. Finally, it is important to notice that the plot of multicollinearity was made without the interaction variables: if the model contains interaction variables in fact, VIFs might be inflated.  
-Notice that a zero-inflation check was carried out with the performance package and there is no evidence that the model is suffering of zero-inflation problem.
+The residuals are randomly scattered around the zero line and no evident pattern is shown in this diagnostic plot. For this reason, the assumption of a linear relationship between log count and linear predictor is met.
 
-# Final model and conclusion
-From the analysis above, the final model is a Quasi-Poisson model 
-$$
+\newpage 
+
+# Conclusions
+ADD
+
+# References
+$^{[1]}$ A. Lovett and R. Flowerdew (1989). "Analysis of Count Data Using Poisson Regression", Professional Geographer, 41, pp. 190-198.  
+$^{[2]}$ Michael L. Zwilling (2013). "Negative Binomial Regression", Mathematical Journal.
+
+\newpage
+
+# Appendix
+
+**Model 1: **
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrrrr}
+    \toprule
+    & Estimate & Std. Error & z value & Pr(\textgreater|z|)\\
+    \midrule
+    (Intercept) & 4.21 & 0.40 & 10.57 & 0.00 \\
+    LogDistance & -0.43 & 0.16 & -2.69 & 0.01 \\
+    LogPopulation & -1.36 & 0.45 & -3.03 & 0.00 \\
+    Degree\_Urb & -0.08 & 0.01 & -5.33 & 0.00  \\
+    DirectionW & -0.02 & 0.11 & -0.20 & 0.84 \\
+    LogDistance:LogPopulation & 0.18 & 0.11 & 1.60 & 0.11 \\
+    LogDistance:Degree\_Urb & 0.04 & 0.02 & 2.17 & 0.03 \\
+    LogPopulation:Degree\_Urb & 0.01 & 0.01 & 1.25 & 0.21 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of $\textit{Model 1}$ coefficients}
+  \label{tab:M1}
+\end{table}
+
+**Model 2: **
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrrrr}
+    \toprule
+    & Estimate & Std. Error & z value & Pr(\textgreater|z|)\\
+    \midrule
+    (Intercept) & 4.21 & 0.40 & 10.57 & 0.00 \\
+    LogDistance & -0.43 & 0.16 & -2.69 & 0.01 \\
+    LogPopulation & -1.36 & 0.45 & -3.03 & 0.00 \\
+    Degree\_Urb & -0.08 & 0.01 & -5.33 & 0.00  \\
+    DirectionW & -0.02 & 0.11 & -0.20 & 0.84 \\
+    LogDistance:LogPopulation & 0.18 & 0.11 & 1.60 & 0.11 \\
+    LogDistance:Degree\_Urb & 0.04 & 0.02 & 2.17 & 0.03 \\
+    LogPopulation:Degree\_Urb & 0.01 & 0.01 & 1.25 & 0.21 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of $\textit{Model 2}$ coefficients}
+  \label{tab:M2}
+\end{table}
+
+\newpage
+
+**Model 3: **
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrrrr}
+    \toprule
+    & Estimate & Std. Error & z value & Pr(\textgreater|z|)\\
+    \midrule
+    (Intercept) & 4.21 & 0.40 & 10.57 & 0.00 \\
+    LogDistance & -0.43 & 0.16 & -2.69 & 0.01 \\
+    LogPopulation & -1.36 & 0.45 & -3.03 & 0.00 \\
+    Degree\_Urb & -0.08 & 0.01 & -5.33 & 0.00  \\
+    DirectionW & -0.02 & 0.11 & -0.20 & 0.84 \\
+    LogDistance:LogPopulation & 0.18 & 0.11 & 1.60 & 0.11 \\
+    LogDistance:Degree\_Urb & 0.04 & 0.02 & 2.17 & 0.03 \\
+    LogPopulation:Degree\_Urb & 0.01 & 0.01 & 1.25 & 0.21 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of $\textit{Model 3}$ coefficients}
+  \label{tab:M3}
+\end{table}
+
+**Model 4: **
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrrrr}
+    \toprule
+    & Estimate & Std. Error & z value & Pr(\textgreater|z|)\\
+    \midrule
+    (Intercept) & 4.21 & 0.40 & 10.57 & 0.00 \\
+    LogDistance & -0.43 & 0.16 & -2.69 & 0.01 \\
+    LogPopulation & -1.36 & 0.45 & -3.03 & 0.00 \\
+    Degree\_Urb & -0.08 & 0.01 & -5.33 & 0.00  \\
+    DirectionW & -0.02 & 0.11 & -0.20 & 0.84 \\
+    LogDistance:LogPopulation & 0.18 & 0.11 & 1.60 & 0.11 \\
+    LogDistance:Degree\_Urb & 0.04 & 0.02 & 2.17 & 0.03 \\
+    LogPopulation:Degree\_Urb & 0.01 & 0.01 & 1.25 & 0.21 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of $\textit{Model 4}$ coefficients}
+  \label{tab:M4}
+\end{table}
+
+\newpage
+
+**Final Model: **
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrrrr}
+    \toprule
+    & Estimate & Std. Error & z value & Pr(\textgreater|z|)\\
+    \midrule
+    (Intercept) & 4.21 & 0.40 & 10.57 & 0.00 \\
+    LogDistance & -0.43 & 0.16 & -2.69 & 0.01 \\
+    LogPopulation & -1.36 & 0.45 & -3.03 & 0.00 \\
+    Degree\_Urb & -0.08 & 0.01 & -5.33 & 0.00  \\
+    DirectionW & -0.02 & 0.11 & -0.20 & 0.84 \\
+    LogDistance:LogPopulation & 0.18 & 0.11 & 1.60 & 0.11 \\
+    LogDistance:Degree\_Urb & 0.04 & 0.02 & 2.17 & 0.03 \\
+    LogPopulation:Degree\_Urb & 0.01 & 0.01 & 1.25 & 0.21 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of $\textit{Final Model}$ coefficients}
+  \label{tab:Final}
+\end{table}

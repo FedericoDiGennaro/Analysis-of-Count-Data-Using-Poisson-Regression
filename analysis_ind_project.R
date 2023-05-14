@@ -13,6 +13,8 @@ library(pscl)
 library(AER)
 library(AICcmodavg)
 library(performance)
+library(gridExtra)
+library(dplyr)
 
 # load data ---------------------------------------------------------------
 rm(list = ls())
@@ -146,29 +148,34 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
                     + Direction , data, family = poisson(link = "log"),
                    control = glm.control(maxit = 1000))
 summary(poisson.model)
-dispersiontest(poisson.model)
 
 qpoisson.model1<-glm(Apprentices ~ Distance + Population + Degree_Urb
                    + Direction , data, family = quasipoisson(),
                    control = glm.control(maxit = 1000))
 summary(qpoisson.model1)
 
-with(poisson.model, cbind(res.deviance = deviance, df = df.residual,
-                         p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+# fit negative binomial model
+nb_model <- glm.nb(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction, data)
 
+# print summary of the model
+summary(nb_model)
 
-poisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb
-                    + Direction , data, family = quasipoisson(),
-                    control = glm.control(maxit = 1000))
-summary(poisson.model2)
+par(mfrow=c(1,1))
+
+yhat <- predict(poisson.model, type = "response")
+plot(yhat, residuals(poisson.model, type = "pearson"),
+     xlab = "Fitted Values", ylab = "Pearson Residuals")
 
 # MODEL 3: log of population and distance ---------------------------------------------------------------------
 data$Distance = log(data$Distance)
 data$Population = log(data$Population)
-poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb
-                   + Direction, data , family = poisson(link = "log"),
-                   control = glm.control(maxit = 1000))
-summary(poisson.model)
+
+nb_model2<-glm.nb(Apprentices ~ Distance + Population + Degree_Urb
+                   + Direction, data)
+summary(nb_model2)
+
+AIC(nb_model, nb_model2)
 
 
 qpoisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb
@@ -238,3 +245,52 @@ plot(qpoisson.model3$fitted.values, my_resid)
 plot(qpoisson.model3, which=1)
 
 check_zeroinflation(qpoisson.model3)
+
+data_filtered <- filter(data, Apprentices != 0)
+
+# Create the scatterplot with filtered data
+ggplot(data = data_filtered, aes(x = Degree_Urb, y = log(Apprentices))) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Scatterplot of Apprentices and LogDistance", x = "LogDistance", y = "Log(Apprentices)")
+
+ggplot(data = data_filtered, aes(x = Distance, y = log(Apprentices))) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Scatterplot of Apprentices and LogDistance", x = "LogDistance", y = "Log(Apprentices)")
+
+#################################
+data <- read_excel("data/data2.xlsx")
+data$Direction <- as.factor(data$Direction)
+
+nb_model1<-glm.nb(Apprentices ~ (Distance + Population + Degree_Urb + Direction), data)
+summary(nb_model1)
+
+data$Distance = log(data$Distance)
+colnames(data)[colnames(data) == "Distance"] <- "LogDistance"
+data$Population = log(data$Population)
+colnames(data)[colnames(data) == "Population"] <- "LogPopulation"
+
+nb_model2<-glm.nb(Apprentices ~ (LogDistance + LogPopulation 
+                                 + Degree_Urb + Direction), data)
+summary(nb_model2)
+
+#AIC1 = 184.64
+#AIC2 = 166.62 --> this is the preferred model
+
+#now I add interactions to model pref
+nb_model3<-glm.nb(Apprentices ~ (LogDistance + 
+                                   LogPopulation + Degree_Urb + Direction)^2, data, maxit=10000)
+summary(nb_model3)
+
+lrtest(nb_model2, nb_model3)
+# p-value of this test is 0.081
+
+#starting from the full model in model 3
+
+# Perform stepwise model selection
+final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
+
+# Print summary of the selected model
+summary(final_model)
+
