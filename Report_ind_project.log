@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.14)  14 MAY 2023 13:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.14)  14 MAY 2023 22:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -524,18 +524,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 215--217
 
  []
 
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
-
-[4]
-<Report_ind_project_files/figure-latex/plot3-1.pdf, id=89, 578.16pt x 361.35pt>
+<Report_ind_project_files/figure-latex/plot3-1.pdf, id=83, 578.16pt x 361.35pt>
 File: Report_ind_project_files/figure-latex/plot3-1.pdf Graphic file (type pdf)
 <use Report_ind_project_files/figure-latex/plot3-1.pdf>
-Package pdftex.def Info: Report_ind_project_files/figure-latex/plot3-1.pdf  used on input line 274.
+Package pdftex.def Info: Report_ind_project_files/figure-latex/plot3-1.pdf  used on input line 261.
 (pdftex.def)             Requested size: 472.02992pt x 295.0187pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -544,11 +536,19 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[5 <./Report_ind_project_files/figure-latex/plot3-1.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 318--320
+[4]
+Underfull \hbox (badness 10000) in paragraph at lines 291--293
 
  []
 
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[5 <./Report_ind_project_files/figure-latex/plot3-1.pdf>]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -565,21 +565,13 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [7]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
-
-[8]
 <Report_ind_project_files/figure-latex/plot4-1.pdf, id=120, 578.16pt x 469.755pt>
 File: Report_ind_project_files/figure-latex/plot4-1.pdf Graphic file (type pdf)
 <use Report_ind_project_files/figure-latex/plot4-1.pdf>
-Package pdftex.def Info: Report_ind_project_files/figure-latex/plot4-1.pdf  used on input line 455.
+Package pdftex.def Info: Report_ind_project_files/figure-latex/plot4-1.pdf  used on input line 381.
 (pdftex.def)             Requested size: 472.02992pt x 383.52432pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 471--473
+Underfull \hbox (badness 10000) in paragraph at lines 397--399
 
  []
 
@@ -590,11 +582,11 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[9 <./Report_ind_project_files/figure-latex/plot4-1.pdf>]
+[8 <./Report_ind_project_files/figure-latex/plot4-1.pdf>]
 <Report_ind_project_files/figure-latex/plot5-1.pdf, id=132, 578.16pt x 469.755pt>
 File: Report_ind_project_files/figure-latex/plot5-1.pdf Graphic file (type pdf)
 <use Report_ind_project_files/figure-latex/plot5-1.pdf>
-Package pdftex.def Info: Report_ind_project_files/figure-latex/plot5-1.pdf  used on input line 476.
+Package pdftex.def Info: Report_ind_project_files/figure-latex/plot5-1.pdf  used on input line 402.
 (pdftex.def)             Requested size: 472.02992pt x 383.52432pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -603,7 +595,15 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[10 <./Report_ind_project_files/figure-latex/plot5-1.pdf>]
+[9 <./Report_ind_project_files/figure-latex/plot5-1.pdf>]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[10]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 14.49998pt, for example:
@@ -627,31 +627,23 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
-[13]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 14.49998pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.49998pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
-
-[14] (./Report_ind_project.aux)
+[13] (./Report_ind_project.aux)
 Package rerunfilecheck Info: File `Report_ind_project.out' has not changed.
 (rerunfilecheck)             Checksum: 746C05925167974FF1A9173AA3F3E8A9;937.
  ) 
 Here is how much of TeX's memory you used:
- 11542 strings out of 478007
- 182988 string characters out of 5837772
- 1875993 words of memory out of 5000000
- 31476 multiletter control sequences out of 15000+600000
+ 11533 strings out of 478007
+ 182932 string characters out of 5837772
+ 1864993 words of memory out of 5000000
+ 31472 multiletter control sequences out of 15000+600000
  580095 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,12n,76p,381b,542s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,12n,76p,381b,451s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmro12.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb><c:/Users/digen/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Report_ind_project.pdf (14 pages, 295406 bytes).
+Output written on Report_ind_project.pdf (13 pages, 292618 bytes).
 PDF statistics:
- 238 PDF objects out of 1000 (max. 8388607)
- 186 compressed objects within 2 object streams
- 46 named destinations out of 1000 (max. 500000)
+ 233 PDF objects out of 1000 (max. 8388607)
+ 182 compressed objects within 2 object streams
+ 41 named destinations out of 1000 (max. 500000)
  90 words of extra memory for PDF output out of 10000 (max. 10000000)
 
