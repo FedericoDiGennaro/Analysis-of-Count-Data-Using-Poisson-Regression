@@ -230,7 +230,7 @@ plot(check_distribution(qpoisson.model3))
 # Plot overdispersion check
 plot(check_overdispersion(qpoisson.model3))
 
-check_autocorrelation(qpoisson.model3)
+plot(check_collinearity(qpoisson.model3))
 check_zeroinflation(qpoisson.model3)
 check_independence(qpoisson.model3)
 
@@ -293,4 +293,8 @@ final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
 
 # Print summary of the selected model
 summary(final_model)
+plot(check_collinearity(final_model))
+
+final_model <- glm.nb(Apprentices ~ LogDistance + 
+                                       LogPopulation + Degree_Urb, data, maxit=10000)
 

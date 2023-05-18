@@ -20,25 +20,6 @@ output: pdf_document
 
 ---
 
-# Introduction 
-This statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 regions in Scotland.
-The study$^{[1]}$ utilizes the following four variables to try to predict the number of apprentices migrating:
-
-* Distance: Distance from the region to Edinburgh. 
-* Population: Population (1000s) in the region. 
-* Degree_Urb: Degree of urbanization of the region (in %). 
-* Direction: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
-
-In this analysis, we are focusing on the number of apprentices among migrants, which we will refer to as our $\textit{Apprentices}$. It is crucial to note that our outcome variable can be classified as count data, taking only discrete values. As such, it is important to acknowledge that our outcome will not follow a normal distribution (that is continuous), and therefore, traditional linear regression methods cannot be used. Given the nature of our data, we will need to explore alternative statistical methods that are more appropriate for count data analysis. By doing so, we can ensure that our results are both accurate and reliable. From the literature otherwise, we know that Poisson regression is suitable to analyze count data (in this case our $Y$ is the number of $\textit{Apprentices}$, i.e. it can be seen as count data).
-Poisson regression is in the family of the so-called Generalized Linear Models (GLM). In GLMs, the response variable is related to the linear predictor, denoted by $\eta = \beta_0 + \beta_1X_1 + ... + \beta_k X_k$, through a link function $g(\cdot)$. The link function establishes the relationship between the linear predictor and the expected value of the response variable, denoted by $\mathbb{E}[Y|x]$, such that $g(\mathbb{E}[Y|x])=\eta$.
-In the context of Poisson regression (that relies on Poisson distribution), the link function is commonly defined as $g(x)=log(x)$. This specification is particularly useful when working with count data, such as the number of apprentices among migrants in our analysis. 
-\newpage
-
-# Exploratory Data Analysis
-Before fitting a Poisson regression model, it is important to conduct exploratory data analysis. By doing so, we can gain insights into the relationships between variables and identify any potential issues or outliers in the data.  
-In our analysis, we are working with a dataset that consists of 33 observations, each corresponding to a different county in Scotland. For each observation, we have recorded values for the dependent variable of interest, denoted by $\textit{Apprentices}$, as well as the predictor variables that were introduced earlier in the report.
-Conducting exploratory data analysis on this dataset can provide valuable insights into the relationships between variables and the distribution of the data. Additionally, it can help us identify any outliers or missing values that may need to be addressed before fitting the Poisson regression model. 
-
 ```{r setup, include = FALSE}
 # Setup options for R Markdown
 library(ggplot2)
@@ -72,6 +53,26 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduction 
+This statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 counties in Scotland.
+The study$^{[1]}$ provides the following four variables to try to explain the number of apprentice migrations:
+
+* Distance: Distance from the county to Edinburgh. 
+* Population: Population (1000s) in the county. 
+* Degree_Urb: Degree of urbanization of the county (in %). 
+* Direction: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
+
+We define the outcome variable $\textit{Apprentices}$, representing the number of apprentices originating from each of the 33 Scottish counties.  
+It is crucial to note that our outcome variable can be classified as $textit{count data}$, taking only discrete values. As such, it is important to acknowledge that our outcome will not follow a normal distribution (that is continuous), and therefore, traditional linear regression methods cannot be used. Given the nature of our data, we will need to explore alternative statistical methods that are more appropriate for count data analysis so that we can ensure that our results are both accurate and reliable.  
+From the literature otherwise, we know that Poisson regression is suitable to analyze count data as the ones of this analysis.
+Poisson regression is in the family of the so-called Generalized Linear Models (GLM). In a GLM, the response variable $Y$ is related to the linear predictor, denoted by $\eta = \beta_0 + \beta_1X_1 + ... + \beta_k X_k$, through a link function $g(\cdot)$. The link function establishes the relationship between the linear predictor and the expected value of the response variable, denoted by $\mathbb{E}[Y|x]$, such that $g(\mathbb{E}[Y|x])=\eta$.
+In the context of Poisson regression (that relies on Poisson distribution), the link function is commonly defined as $g(x)=log(x)$.
+\newpage
+
+# Exploratory Data Analysis
+Before fitting any kind of GLM, it is important to conduct exploratory data analysis. By doing so, we can gain insights into the relationships between variables and identify any potential issues or outliers in the data.  
+In this analysis, I am working with a dataset that consists of 33 observations, each corresponding to a different county in Scotland. For each observation, it was recorded the value for the dependent variable of interest, denoted by $\textit{Apprentices}$, as well as the predictor variables that were introduced earlier in the report.
+Let's now have a look at the pair plot of the exogenous variables and at the distribution of the outcome.
 ```{r plot1, fig.cap = "Pair lot of the regressors, divided by the factor variable Direction", fig.width= 15,fig.height=12}
 # define regressors
 data$Direction <- as.factor(data$Direction)
@@ -91,8 +92,9 @@ plot <- plot +
 # Display the plot
 print(plot)
 ```
-Upon examining the plot, we can observe that the distributions of the variables $\textit{Distance}$, $\textit{Population}$, and $\textit{Degree Urb}$ differ depending on the value of the factor variable $\textit{Direction}$. Additionally, it is worth noting that the variables $\textit{Distance}$ and $\textit{Population}$ exhibit significant skewness.
-Given their skewed distributions, it may be beneficial to apply a logarithmic transformation to these variables before fitting our Poisson regression models. This transformation can help to reduce the effect of extreme values on the results and improve the model's performance.
+Upon examining the plot, we can observe that the distributions of the variables $\textit{Distance}$, $\textit{Population}$, and $\textit{Degree\_Urb}$ differ depending on the value of the factor variable $\textit{Direction}$.   
+$\textit{Distance}$ and $\textit{Degree\_Urb}$ are the variables more correlated but from the decomposition of the plot above w.r.t. the factor variable $\textit{Direction}$ we can observe that for some value of $\textit{Direction}$, also other pairs of variables are more correlated.  
+Additionally, it is worth noting that the variables $\textit{Distance}$ and $\textit{Population}$ exhibit a bit of skewness. Given that, it may be beneficial to apply a logarithmic transformation to these variables before fitting our Poisson regression models. This transformation can help to reduce the effect of extreme values on the results and improve the model's performance.
 
 ```{r plot2, fig.cap = "Histogram of outcome variable Apprentices", fig.width= 10,fig.height=6}
 # Generate some example data
@@ -133,7 +135,7 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction,
 # Example table data
 ```
 The Poisson regression model (cfr. Table \ref{tab:M1} for a summary on its coefficients) in question appears to be afflicted with several issues. Firstly, as suggested in the exploratory data analysis, the model suffers from over-dispersion. To confirm this, we can fit a Quasi-Poisson model in R that outputs the estimate of the dispersion parameter $(\phi)$, which is found to be $7731.329$. This value indicates an extremely large degree of over-dispersion, as the dispersion parameter should typically be close to 1 in a Poisson regression model.  
-It is essential to note that the significant coefficients in the original Poisson model may be misleading (that's why I decided to not show them here), as they are likely the result of the over-dispersion issue. The incorrect and artificially small standard errors that result from failing to adjust for over-dispersion can lead to artificially small p-values for the model coefficients.  
+It is essential to note that the significant coefficients in the original Poisson model may be misleading, as they are likely the result of the over-dispersion issue. The incorrect and artificially small standard errors that result from failing to adjust for over-dispersion can lead to artificially small p-values for the model coefficients.  
 ```{r}
 poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction, data, family=poisson(link = "log"))
 ```
@@ -222,7 +224,18 @@ Hence, the final model fitted is:
 $$
 \textit{Final Model}: \hat{y} = exp(7.33-1.81X_1'+0.83X_2'-0.02X_3').
 $$
-In this Final model, all the coefficients are significant at level 0.05 (cfr. Table \ref{tab:Final} in Appendix).
+In this Final model, all the coefficients are significant at level 0.05 (cfr. Table \ref{tab:Final} in Appendix). It is also good practice checking the correlation between the variables. We can do it by observing at the following plot.
+
+```{r}
+final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
+```
+
+```{r plot4, fig.cap = "collinarity plot", fig.width= 8,fig.height=5}
+plot(check_collinearity(final_model))
+```
+
+From this plot I am happy to notice that the correlation among the variables is really low.
+
 \newpage
 
 # Model assessment
@@ -230,7 +243,7 @@ At this point, it is important to verify whether or not the assumptions of the $
 
 **1)** $Y|X_1', X_2', X_3' \sim NegBin(\mu,\alpha)$ where $\mu = exp(\hat{\beta_0} + \hat{\beta_1}X_1' + \hat{\beta_2}X_2' + \hat{\beta_3}X_3')$ and $\alpha \text{ is the over-dispersion parameter}$.  
 To do so, I use a diagnostic plot provided by the package $\textit{performance}$.
-```{r plot4, fig.cap = "diagnostic plot for distribution", fig.width= 8,fig.height=6.5}
+```{r plot5, fig.cap = "diagnostic plot for distribution", fig.width= 8,fig.height=6.5}
 final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
 plot(check_distribution(final_model))
 ```
@@ -240,7 +253,7 @@ From the above plot, we can see that the distribution that better fits the data 
 There is no way to check this assumption because it depends on how the data were collected; we have to assume that it is true.
 
 **3)** There is a linear relationship between log count and linear predictor.  
-```{r plot5, fig.cap = "diagnostic plot of residuals vs fitted", fig.width= 8,fig.height=6.5}
+```{r plot6, fig.cap = "diagnostic plot of residuals vs fitted", fig.width= 8,fig.height=6.5}
 
 # Extract the residuals and linear predictor values
 residuals <- residuals(final_model, type = "pearson")
@@ -260,7 +273,13 @@ The residuals are randomly scattered around the zero line and no evident pattern
 \newpage 
 
 # Conclusions
-ADD
+As we can see from the $\textit{Final Model}$, the variables that play a role in determining the value of Apprentices for a given county are:  
+1) $\textit{log(Distance)}$, with negative coefficient ($-1.81$). This means that the number of apprentice migrations decreases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Distance)}$ increases. This is what we would expect given that a long travel can decrease the willingness of an apprentice to migrate to Edinburgh.  
+2) $\textit{log(Population)}$, with positive coefficient ($0.83$). This means that the number of Apprentices increases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Population)}$ increases.  
+Even this result is expected because when the population of a County is big, there is more competition and people are willing to travel more to get better opportunities.  
+3) Finally, the last variable ($\textit{Degree\_Urb}$), has a negative coefficient ($-0.02$) that is very small (but from Table \ref{tab:Final} we can see that it is significantly different from zero). This means that the number of apprentices migration decreases when the $\textit{Degree\_Urb}$ increases, but due to the magnitude of its $\beta$ the influence of this variable on the outcome variable is not marked.  
+
+Please notice that the direction is not a significant variable, meaning that probably the things that affect most apprentices migrations are more about the social environment that the city you are offered ($\textit{Degree\_Urb}$, $\textit{Population}$ ) instead of the direction of it.
 
 # References
 $^{[1]}$ A. Lovett and R. Flowerdew (1989). "Analysis of Count Data Using Poisson Regression", Professional Geographer, 41, pp. 190-198.  
