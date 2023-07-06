@@ -4,7 +4,7 @@ subtitle: "MATH-493 - Applied Biostatistics: individual project"
 
 #date: "`r Sys.Date()`"
 
-author: " Federico Di Gennaro"
+author: "Federico Di Gennaro"
 
 
 geometry: margin=2.5cm
@@ -57,10 +57,10 @@ knitr::opts_chunk$set(
 This statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 counties in Scotland.
 The study$^{[1]}$ provides the following four variables to try to explain the number of apprentice migrations:
 
-* Distance: Distance from the county to Edinburgh. 
-* Population: Population (1000s) in the county. 
-* Degree_Urb: Degree of urbanization of the county (in %). 
-* Direction: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
+* $\textit{Distance}$: Distance from the county to Edinburgh. 
+* $\textit{Population}$: Population (1000s) in the county. 
+* $\textit{Degree\_Urb}$: Degree of urbanization of the county (in %). 
+* $\textit{Direction}$: Categorical variables that takes value in $\{1,2,3\}$ stays for: 1=North, 2=West, 3=South. 
 
 We define the outcome variable $\textit{Apprentices}$, representing the number of apprentices originating from each of the 33 Scottish counties.  
 It is crucial to note that our outcome variable can be classified as $textit{count data}$, taking only discrete values. As such, it is important to acknowledge that our outcome will not follow a normal distribution (that is continuous), and therefore, traditional linear regression methods cannot be used. Given the nature of our data, we will need to explore alternative statistical methods that are more appropriate for count data analysis so that we can ensure that our results are both accurate and reliable.  
@@ -73,7 +73,7 @@ In the context of Poisson regression (that relies on Poisson distribution), the 
 Before fitting any kind of GLM, it is important to conduct exploratory data analysis. By doing so, we can gain insights into the relationships between variables and identify any potential issues or outliers in the data.  
 In this analysis, I am working with a dataset that consists of 33 observations, each corresponding to a different county in Scotland. For each observation, it was recorded the value for the dependent variable of interest, denoted by $\textit{Apprentices}$, as well as the predictor variables that were introduced earlier in the report.
 Let's now have a look at the pair plot of the exogenous variables and at the distribution of the outcome.
-```{r plot1, fig.cap = "Pair lot of the regressors, divided by the factor variable Direction", fig.width= 15,fig.height=12}
+```{r plot1, fig.cap = "Pair lot of the regressors, divided by the factor variable Direction.", fig.width= 15,fig.height=12}
 # define regressors
 data$Direction <- as.factor(data$Direction)
 X <- data[-c(1,3)]
@@ -96,7 +96,7 @@ Upon examining the plot, we can observe that the distributions of the variables 
 $\textit{Distance}$ and $\textit{Degree\_Urb}$ are the variables more correlated but from the decomposition of the plot above w.r.t. the factor variable $\textit{Direction}$ we can observe that for some value of $\textit{Direction}$, also other pairs of variables are more correlated.  
 Additionally, it is worth noting that the variables $\textit{Distance}$ and $\textit{Population}$ exhibit a bit of skewness. Given that, it may be beneficial to apply a logarithmic transformation to these variables before fitting our Poisson regression models. This transformation can help to reduce the effect of extreme values on the results and improve the model's performance.
 
-```{r plot2, fig.cap = "Histogram of outcome variable Apprentices", fig.width= 10,fig.height=6}
+```{r plot2, fig.cap = "Histogram of the outcome variable.", fig.width= 10,fig.height=6}
 # Generate some example data
 set.seed(0)
 y <- data[3]
@@ -144,7 +144,7 @@ poisson.model<-glm(Apprentices ~ Distance + Population + Degree_Urb + Direction,
 It is important to note that over-dispersion can have a significant impact on the model's results, as it can lead to incorrect conclusions about the relationships between the variables. Removing the outlier observation noticed in the EDA reduces the over-dispersion but does not remove it.  
 For this reason, it is better to use a model that takes it into account; this such a model can be a Quasi-Poisson model or a negative binomial model. The Quasi-Poisson model only provides a rough estimate of the dispersion parameter, so it may be necessary to consider alternative models, such as the Negative Binomial Regression model, which explicitly models over-dispersion$^{[2]}$.  
 For this reason from now on I will focus on fitting a negative binomial model. I chose a negative binomial model over a quasi-poisson model because when checking if the variance and the mean are proportional in the "mean-variance plot" (or "dispersion plot"), the points does not seems to be randomly scattered around a horizontal line at zero. Recall that the coefficients of a negative binomial model are implemented using maximum likelihood estimation. 
-```{r plot3, fig.cap = "mean-variance plot", fig.width= 8,fig.height=5}
+```{r plot3, fig.cap = "Mean-variance plot.", fig.width= 8,fig.height=5}
 data <- read_excel("data/data2.xlsx")
 data$Direction <- as.factor(data$Direction)
 
@@ -155,7 +155,6 @@ plot(yhat, residuals(poisson.model2, type = "pearson"),
 ```
 Given that the points form a curve that slopes downward from left to right, the variance increases slower than the mean.  
 The form of the model equation for negative binomial regression is the same as that for Poisson regression: the log of the outcome is predicted with a linear combination of the predictors.
-
 $$\textit{Model 2}: \\
 Y|X_1,...,X_4 \sim NegBin(\mu,\alpha).$$ 
 $$\mu = exp(\eta),\ \eta=\beta_0 + \beta_1X_1 + ... + \beta_4 X_4, \ \alpha \text{ is the over-dispersion parameter}.$$
@@ -192,7 +191,7 @@ You can have a look at Table \ref{tab:M3} in the Appendix for a summary on coeff
 
 **Model 4: Negative binomial model with log-transformations and interactions.**  
 To improve the model's ability to explain the data, I have added complexity to $\textit{Model 3}$ by including interactions between all the exogenous variables. 
-Let $Z_{i,j}=X_i' X_j'$  $\forall i,j=1,...4,$ $j>i$. Then we define $Model 4$ as:
+Let $Z_{i,j}=X_i' X_j'$  $\forall i,j=1,...4,$ $j>i$. Then we define $\textit{Model 4}$ as:
 
 $$\textit{Model 4}: \\
 Y|X_1',..,X_4', Z_{1,2}, ..., Z_{3,4} \sim NegBin(\mu,\alpha).$$ 
@@ -201,20 +200,20 @@ $$\mu = exp(\eta),\ \alpha \text{ is the over-dispersion parameter}.$$
 This time $\eta =  \beta_0 + \beta_1X_1' + ... + \beta_4 X_4'+ \beta_{1,2}Z_{1,2} + ... + \beta_{3,4}Z_{3,4}$
 You can have a look at Table \ref{tab:M4} in the Appendix for a summary on coefficients estimated for this model.
 ```{r}
-nb_model3<-glm.nb(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb + Direction)^2, data)
+nb_model3<-glm.nb(Apprentices ~ (LogDistance + LogPopulation + Degree_Urb + Direction)^2, data=data, maxit=100000)
 ``` 
 To test whether $\textit{Model 4}$ is better than $\textit{Model 3}$, we can use a likelihood ratio test. 
-$$\mathcal{H}_0: \text{Model 3 is true}.$$
-$$\mathcal{H}_1: \text{Model 4 is true}.$$
+$$\mathcal{H}_0: \text{Model 3 is true}. \ \ \mathcal{H}_1: \text{Model 4 is true}.$$
 ```{r}
-knitr::kable(lrtest(nb_model2, nb_model3), digits=2)
+knitr::kable(lrtest(nb_model2,nb_model3), digits=2)
 ```
 
-As we can see from the results above, the p-value of such a test is between 0.05 and 0.1 and so the result of the test crucially depends on the level of significance $\alpha$ we chose; the preferred model at a level 0.1 is $\textit{Model 4}$ but the preferred model at level 0.05 is $\textit{Model 3}$. Given that the AIC is lower for $\textit{Model 3}$ $(200 \ vs \ 166.62)$, we can argue that adding complexity does not improve too much the fitting. For this reason, the preferred model remains $\textit{Model 3}$.
+As we can see from the results above, the p-value of such a test is between 0.05 and 0.1 and so the result of the test crucially depends on the level of significance $\alpha$ we chose; the preferred model at a level 0.1 is $\textit{Model 4}$ but the preferred model at level 0.05 is $\textit{Model 3}$. Given that the AIC is lower for $\textit{Model 3}$ $(200 \ vs \ 166.62)$, we can argue that adding complexity does not improve too much the fitting.  
+Another issue with this fit is that R is not able to arrive at convergence for the estimation of the parameters of this model, so there can be erroneous parameters and p-values. For these reasons, the preferred model remains $\textit{Model 3}$.
 
 **Final Model.**  
 Starting from $\textit{Model 3}$, I perform a stepwise selection based on the Akaike Information Criterion (AIC), a popular method to compare different models. In this way, we can balance the goodness-of-fit and the complexity of our model, and choose the one that best represents the underlying data-generating process.  
-After the selection, the variables keept are:
+After the selection, the variables kept are:
 $$
 X_1' = log(Distance); \;
 X_2' = log(Population); \;
@@ -230,7 +229,7 @@ In this Final model, all the coefficients are significant at level 0.05 (cfr. Ta
 final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
 ```
 
-```{r plot4, fig.cap = "collinarity plot", fig.width= 8,fig.height=5}
+```{r plot4, fig.cap = "Collinearity plot.", fig.width= 8,fig.height=5}
 plot(check_collinearity(final_model))
 ```
 
@@ -243,17 +242,17 @@ At this point, it is important to verify whether or not the assumptions of the $
 
 **1)** $Y|X_1', X_2', X_3' \sim NegBin(\mu,\alpha)$ where $\mu = exp(\hat{\beta_0} + \hat{\beta_1}X_1' + \hat{\beta_2}X_2' + \hat{\beta_3}X_3')$ and $\alpha \text{ is the over-dispersion parameter}$.  
 To do so, I use a diagnostic plot provided by the package $\textit{performance}$.
-```{r plot5, fig.cap = "diagnostic plot for distribution", fig.width= 8,fig.height=6.5}
+```{r plot5, fig.cap = "Diagnostic plot for distribution of outcome variable.", fig.width= 8,fig.height=6.5}
 final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
 plot(check_distribution(final_model))
 ```
-From the above plot, we can see that the distribution that better fits the data is a negative binomial. Using the usual euristic to check wheter or not it is better to fit a zero-inflated model, it turns out that there is no such a big evidence to do so.  
+From the above plot, we can see that the distribution that better fits the data is a negative binomial. Using the usual heuristic to check whether or not it is better to fit a zero-inflated model, it turns out that there is no such a big evidence to do so.  
 
 **2)** The observations are independent.  
 There is no way to check this assumption because it depends on how the data were collected; we have to assume that it is true.
 
 **3)** There is a linear relationship between log count and linear predictor.  
-```{r plot6, fig.cap = "diagnostic plot of residuals vs fitted", fig.width= 8,fig.height=6.5}
+```{r plot6, fig.cap = "Diagnostic plot of residuals vs fitted.", fig.width= 8,fig.height=6.5}
 
 # Extract the residuals and linear predictor values
 residuals <- residuals(final_model, type = "pearson")
@@ -273,11 +272,11 @@ The residuals are randomly scattered around the zero line and no evident pattern
 \newpage 
 
 # Conclusions
-As we can see from the $\textit{Final Model}$, the variables that play a role in determining the value of Apprentices for a given county are:  
-1) $\textit{log(Distance)}$, with negative coefficient ($-1.81$). This means that the number of apprentice migrations decreases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Distance)}$ increases. This is what we would expect given that a long travel can decrease the willingness of an apprentice to migrate to Edinburgh.  
-2) $\textit{log(Population)}$, with positive coefficient ($0.83$). This means that the number of Apprentices increases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Population)}$ increases.  
+As we can see from the $\textit{Final Model}$, the variables that play a role in determining the value of Apprentices for a given county are:    
+**1)** $\textit{log(Distance)}$, with negative coefficient ($-1.81$). This means that the number of apprentice migrations decreases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Distance)}$ increases. This is what we would expect given that a long travel can decrease the willingness of an apprentice to migrate to Edinburgh.  
+**2)** $\textit{log(Population)}$, with positive coefficient ($0.83$). This means that the number of Apprentices increases with a linear rate (due to the log in the definition of the variable) when the $\textit{log(Population)}$ increases.  
 Even this result is expected because when the population of a County is big, there is more competition and people are willing to travel more to get better opportunities.  
-3) Finally, the last variable ($\textit{Degree\_Urb}$), has a negative coefficient ($-0.02$) that is very small (but from Table \ref{tab:Final} we can see that it is significantly different from zero). This means that the number of apprentices migration decreases when the $\textit{Degree\_Urb}$ increases, but due to the magnitude of its $\beta$ the influence of this variable on the outcome variable is not marked.  
+**3)** Finally, the last variable ($\textit{Degree\_Urb}$), has a negative coefficient ($-0.02$) that is very small (but from Table \ref{tab:Final} we can see that it is significantly different from zero). This means that the number of apprentices migration decreases when the $\textit{Degree\_Urb}$ increases, but due to the magnitude of its $\beta$ the influence of this variable on the outcome variable is not marked.  
 
 Please notice that the direction is not a significant variable, meaning that probably the things that affect most apprentices migrations are more about the social environment that the city you are offered ($\textit{Degree\_Urb}$, $\textit{Population}$ ) instead of the direction of it.
 
@@ -288,6 +287,8 @@ $^{[2]}$ Michael L. Zwilling (2013). "Negative Binomial Regression", Mathematica
 \newpage
 
 # Appendix
+
+You can find the code of the analysis [here](https://github.com/FedericoDiGennaro/Analysis-of-Count-Data-Using-Poisson-Regression).  
 
 **Model 1: **
 \begin{table}[htbp]
@@ -394,3 +395,5 @@ $^{[2]}$ Michael L. Zwilling (2013). "Negative Binomial Regression", Mathematica
   \caption{Summary of $\textit{Final Model}$ coefficients}
   \label{tab:Final}
 \end{table}
+
+

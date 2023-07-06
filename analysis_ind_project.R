@@ -178,11 +178,6 @@ summary(nb_model2)
 AIC(nb_model, nb_model2)
 
 
-qpoisson.model2<-glm(Apprentices ~ Distance + Population + Degree_Urb
-                   + Direction, data , family = quasipoisson(),
-                   control = glm.control(maxit = 1000))
-summary(qpoisson.model2)
-
 # MODEL 4: interactions ---------------------------------------------------------------------
 ggpairs(X)
 
@@ -193,9 +188,6 @@ poisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
 summary(poisson.model3)
 dispersiontest(poisson.model3)
 
-qpoisson.model3<-glm(Apprentices ~ (Distance + Population + Degree_Urb
-                                   + Direction)^2 , data, family = quasipoisson())
-summary(qpoisson.model3)
 
 #F test to compare two quasi-poisson models (NESTED, H0: reduced model is sufficient)
 drop_in_dev <- anova(qpoisson.model2, qpoisson.model3, test = "F")
@@ -283,14 +275,16 @@ nb_model3<-glm.nb(Apprentices ~ (LogDistance +
                                    LogPopulation + Degree_Urb + Direction)^2, data, maxit=10000)
 summary(nb_model3)
 
+AIC(nb_model2, nb_model3)
+
 lrtest(nb_model2, nb_model3)
 # p-value of this test is 0.081
 
 #starting from the full model in model 3
 
 # Perform stepwise model selection
-final_model<-stepAIC(nb_model2, direction = "both", trace = FALSE)
-
+final_model<-stepAIC(nb_model3, direction = "both", trace = FALSE)
+AIC(final_model)
 # Print summary of the selected model
 summary(final_model)
 plot(check_collinearity(final_model))
