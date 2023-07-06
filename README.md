@@ -1,4 +1,4 @@
-# Statystical analysis of count data  
+# Statistical analysis of count data  
 Statistical analysis examines the relationship between the apprentice migration between 1775 and 1799 to Edinburgh from 33 counties in Scotland.  
 
 ### Reference  
